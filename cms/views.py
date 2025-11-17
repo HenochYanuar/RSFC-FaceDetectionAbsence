@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect , get_object_or_404
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -9,6 +10,20 @@ import base64
 # Create your views here.
 
 def login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+
+        try:
+            user = Admins.objects.get(username=username)
+
+            if check_password(password, user.password):
+              request.session['nik_id'] = user.nik_id
+              return redirect('/admins/addUser')
+        except Admins.DoesNotExist:
+            messages.error(request, 'Invalid username or password')
+            return redirect('/admins/login')
+        
     return render(request, 'admin/login.html')
 
 def addUser(request):
