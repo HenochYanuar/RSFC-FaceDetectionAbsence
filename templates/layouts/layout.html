@@ -9,14 +9,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RSFC | {% block title %}{% endblock %}</title>
+  <title>RSFC | {{ title }}</title>
 
   <style>
     ul li a .active {
       color: aqua;
     }
   </style>
-  <link rel="shortcut icon" href="/static/assets/dist/img/f2399a3c-e44e-4e2a-82d0-520696ffad1b.png"/>
+  <link rel="shortcut icon" href="{% static '/assets/images/rsfc_logo.png' %}"/>
 
   <link rel="stylesheet" href="/static/assets/dist/css/main.css">
 

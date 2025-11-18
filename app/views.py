@@ -51,15 +51,15 @@ def absence(request):
                 user_encoding = user_encoding[0]
 
                 # Compare the uploaded photo with the database photo
-                results = face_recognition.compare_faces([user_encoding], uploaded_encoding, tolerance=0.4)
+                results = face_recognition.compare_faces([user_encoding], uploaded_encoding, tolerance=0.45)
 
                 date = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
 
                 if results[0]:
                     InAbsences.objects.create(
                         nik=user,           
-                        date=date,
-                        status='present'
+                        date_in=date,
+                        status_in='present'
                     )
                     default_storage.delete(temp_file_path)
                     messages.success(request, 'Berhasil Absen')

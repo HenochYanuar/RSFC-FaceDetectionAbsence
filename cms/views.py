@@ -24,8 +24,7 @@ def login(request):
               return redirect('/admins/addUser')
         except Admins.DoesNotExist:
             messages.error(request, 'Invalid username or password')
-            return redirect('/admins/login')
-        
+            return redirect('/admins/login') 
     return render(request, 'admin/login.html')
 
 @login_auth
@@ -33,7 +32,10 @@ def dashboard(request):
     # del request.session['nik_id']
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
-    context = {'user': user}
+    context = {
+      'user': user,
+      'title': 'Dashboard'
+    }
 
     return render(request, 'admin/dashboard.html', context)
 
@@ -44,8 +46,9 @@ def divisi_master(request):
     divisi_list = MasterDivisions.objects.all()
 
     context = {
-       'divisi_list': divisi_list, 
-       'user': user
+      'user': user,
+      'title': 'Divisi Master',
+      'divisi_list': divisi_list, 
     }
 
     return render(request, 'admin/divisi_master/index.html', context)
@@ -75,7 +78,10 @@ def addDivisi(request):
       messages.success(request, 'Data divisi berhasil diupload.')
       return redirect('/admins/divisi_master')
     
-    context = {'user': user}
+    context = {
+      'user': user,
+      'title': 'Tambah Divisi',
+    }
     return render(request, 'admin/divisi_master/addForm.html', context)
 
 @login_auth
