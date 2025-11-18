@@ -2,7 +2,7 @@
 {% block content %}
 <div class="card">
     <div class="card-header">
-        <a href="" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Tambah Divisi</a>
+        <a href="{% url 'addDivisi' %}" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Tambah Divisi</a>
     </div>
     <!-- /.card-header -->
     <div class="card-body">
@@ -15,22 +15,22 @@
                     <th class="col-3">Aksi</th>
                 </tr>
             </thead>
-                <tr>
-                  {% if divisi_list %}
-                  {% regroup divisi_list by forloop.counter0 as index %}
-                  {% for divisi in divisi_list %}
-                    <td class="col-1 text-center">{{ forloop.counter }}</td>
-                    <td class="col-3">{{ divisi.id }}</td>
-                    <td class="col-5">{{ divisi.name }}</td>
-                    <td class="col-3 text-center">
-                      <a href="" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i> Edit</a> |
-                      <a href="" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Delete</a>
-                    </td>
-                  {% endfor %}
-                  {% else %}
-                    <td colspan="4" class="text-center">No Divisi Available</td>
-                  {% endif %}
-                </tr>
+              {% if divisi_list %}
+              {% regroup divisi_list by forloop.counter0 as index %}
+              {% for divisi in divisi_list %}
+              <tr>
+                <td class="col-1 text-center">{{ forloop.counter }}</td>
+                <td class="col-3">{{ divisi.id }}</td>
+                <td class="col-5">{{ divisi.name }}</td>
+                <td class="col-3 text-center">
+                  <a href="" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i> Edit</a> |
+                  <a href="" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Delete</a>
+                </td>
+              </tr>
+              {% endfor %}
+              {% else %}
+                <td colspan="4" class="text-center">No Divisi Available</td>
+              {% endif %}
             <tbody>
             </tbody>
 
@@ -39,5 +39,19 @@
     <!-- /.card-body -->
 </div>
 <!-- /.card -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+{% if messages %}
+<script>
+    {% for message in messages %}
+    Swal.fire({
+        icon: "{{ message.tags }}",  
+        title: "{{ message.tags|capfirst }}",
+        text: "{{ message }}",
+        showConfirmButton: false,
+        timer: 3000
+    });
+    {% endfor %}
+</script>
+{% endif %}
 {% endblock%}

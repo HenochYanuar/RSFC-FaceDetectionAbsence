@@ -36,6 +36,29 @@ def divisi_master(request):
 
     return render(request, 'admin/divisi_master/index.html', context)
 
+def addDivisi(request):
+    if request.method == 'POST':
+      divisi_id = request.POST['divisi_id']
+      divisi_name = request.POST['divisi_name']
+
+      divisi_list = MasterDivisions.objects.all()
+
+      for divisi in divisi_list:
+          if divisi.id == divisi_id:
+              messages.error(request, 'Divisi sudah ada.')
+              return redirect('/admins/addDivisi')
+
+      # Create new data entry
+      divisi = MasterDivisions(
+          id=divisi_id,
+          name=divisi_name,
+      )
+      divisi.save()
+
+      messages.success(request, 'Data divisi berhasil diupload.')
+      return redirect('/admins/divisi_master')
+    return render(request, 'admin/divisi_master/addForm.html')
+
 def addUser(request):
     if request.method == 'POST':
       nik = request.POST['nik']

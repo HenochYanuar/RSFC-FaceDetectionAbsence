@@ -1,0 +1,41 @@
+{% extends 'layouts/layout.html' %}
+{% block content %}
+<div class="card card-primary">
+    <div class="card-header">
+        <h3 class="card-title"></h3>
+    </div>
+    <!-- /.card-header -->
+    <!-- form start -->
+    <form role="form" method="post" action="{% url 'addDivisi' %}">
+        {% csrf_token %}
+        <div class="card-body">
+            <div class="form-group">
+                <label for="divisi_id">ID Divisi</label>
+                <input type="text" class="form-control" name="divisi_id" id="divisi_id" placeholder="Divisi ID" required>
+            </div>
+            <div class="form-group">
+                <label for="divisi_name">Nama Divisi</label>
+                <input type="text" class="form-control" name="divisi_name" id="divisi_name" placeholder="Nama Divisi" required>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button id="submit" type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{% if messages %}
+<script>
+    {% for message in messages %}
+    Swal.fire({
+        icon: "{{ message.tags }}",  
+        title: "{{ message.tags|capfirst }}",
+        text: "{{ message }}",
+        showConfirmButton: false,
+        timer: 3000
+    });
+    {% endfor %}
+</script>
+{% endif %}
+{% endblock %}
