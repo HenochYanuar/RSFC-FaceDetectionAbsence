@@ -21,11 +21,18 @@ def login(request):
 
             if check_password(password, user.password):
               request.session['nik_id'] = user.nik_id
-              return redirect('/admins/addUser')
+              return redirect('/admins/dashboard')
         except Admins.DoesNotExist:
             messages.error(request, 'Invalid username or password')
             return redirect('/admins/login') 
     return render(request, 'admin/login.html')
+
+def logout(request):
+    try:
+        del request.session['nik_id']
+    except KeyError:
+        pass
+    return redirect('/admins/login')
 
 @login_auth
 def dashboard(request):
@@ -160,4 +167,9 @@ def addUser(request):
         messages.error(request, 'Foto tidak tersedia atau tidak valid.')
 
       return redirect('/admins/addUser')
-    return render(request, 'admin/addUser.html')
+    
+    divisi_list = MasterDivisions.objects.all()
+    context = {
+      'divisi_list': divisi_list
+    }
+    return render(request, 'admin/addUser.html', context)

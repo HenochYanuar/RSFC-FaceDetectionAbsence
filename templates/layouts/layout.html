@@ -119,7 +119,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             </li> {% endcomment %}
             <li class="nav-item active">
               <a href="#" class="nav-link">
-                <i class="nav-icon fas fa-file-import"></i>
+                <i class="nav-icon fa fa-database"></i>
                 <p>Master Data
                   <i class="right fas fa-angle-left"></i>
                 </p>
@@ -127,13 +127,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
               <ul class="nav nav-treeview">
                 <li class="nav-item">
                 <a href="{% url 'divisi_master' %}" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
+                <i class="fa fa-sitemap nav-icon"></i>
                 <p>Master Divisi</p>
                 </a>
                 </li>
                 <li class="nav-item">
                 <a href="" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
+                <i class="fa fa-calendar nav-icon"></i>
                 <p>Master jadwal</p>
                 </a>
                 </li>
@@ -175,7 +175,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
       <div class="p-3">
         <h4>Log Out</h4><br>
         <h6>Click For LogOut</h6>
-        <a href="" class="btn btn-danger font-weight-bolder ">
+        <a href="{% url 'logout' %}" class="btn btn-danger font-weight-bolder ">
           <i class="nav-icon fas fa-door-open"></i>
           Log Out
         </a>
