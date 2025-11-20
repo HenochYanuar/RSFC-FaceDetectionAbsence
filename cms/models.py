@@ -1,4 +1,5 @@
 from django.db import models
+from app.models import *
 
 # Create your models here.
 class MasterDivisions(models.Model):
@@ -12,5 +13,13 @@ class MasterSchedules(models.Model):
     name = models.CharField(max_length=100, unique=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class MappingSchedules(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
+    nik = models.ForeignKey(Users, on_delete=models.CASCADE)
+    schedule = models.ForeignKey(MasterSchedules, on_delete=models.CASCADE)
+    date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

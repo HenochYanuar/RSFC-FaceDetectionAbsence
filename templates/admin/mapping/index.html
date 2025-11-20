@@ -1,0 +1,277 @@
+{% extends 'layouts/layout.html' %}
+{% load static %}
+{% block content %}
+<style>
+    .table-responsive {
+        overflow-x: auto;
+        white-space: nowrap;
+        margin-bottom: 40px;
+    }
+
+    /* Sticky kolom pertama */
+    .sticky-col {
+        position: sticky;
+        left: 0;
+        background: #fff;
+        z-index: 999;
+    }
+
+    .sticky-header {
+        position: sticky;
+        top: 0;
+        background: #343a40;
+        color: white;
+        z-index: 1000;
+    }
+
+    th, td {
+        min-width: 80px;
+        text-align: center;
+    }
+</style>
+<div class="card">
+    <div class="card-header">
+      <a href="#" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalBuatJadwal">
+          <i class="fa fa-plus"></i> Buat Jadwal
+      </a>
+    </div>
+    <!-- /.card-header -->
+    <div class="card-body">
+        <div class="container-fluid py-4">
+            {% if data_jadwal %}
+                {% for divisi_id, data_tahun_divisi in data_jadwal.items %}
+                
+                <div class="card card-primary mb-5 collapsed-card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title text-2xl font-semibold">Divisi: {{ divisi_id }}</h3>
+
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool text-white" data-card-widget="collapse">
+                                <i class="fas fa-plus"></i> 
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        
+                        {% for tahun, data_bulan_tahun in data_tahun_divisi.items %}
+
+                        {% for bulan, data_nik_bulan in data_bulan_tahun.items %}
+                        
+                        <div class="p-3 border-b">
+                            <div class="card card-primary mb-5 shadow collapsed-card">
+                                <div class="card-header bg-danger text-white">
+                                    <h4 class="card-title text-2xl font-semibold"> {{ bulan }} {{ tahun }}</h4>
+
+                                    <div class="card-tools">
+                                        <button type="button" class="btn btn-tool text-white" data-card-widget="collapse">
+                                            <i class="fas fa-plus"></i> 
+                                        </button>
+                                    </div>
+                                </div>
+                            
+                                <div class="card-body p-0">
+
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-bordered table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th class="sticky-header bg-gray">NIK</th>
+                                                    <th class="sticky-header bg-gray">Nama Karyawan</th>
+                                                    {% for hari in 1|ljust:31 %}
+                                                    <th class="text-center sticky-header bg-gray-200">{{ forloop.counter }}</th>
+                                                    {% endfor %}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            
+                                            {% for nik, data_user in data_nik_bulan.items %}
+                                            <tr>
+                                                <td class="font-mono text-xs">{{ nik }}</td>
+                                                <td>{{ data_user.nama }}</td>
+                                                
+                                                {% for hari, kode_jadwal in data_user.days.items %}
+                                                    <td class="text-center font-bold 
+                                                        {% if kode_jadwal != '-' %}bg-info text-primary{% else %}text-gray-400{% endif %}">
+                                                        
+                                                        {{ kode_jadwal }}
+                                                    </td>
+                                                    {% endfor %}
+                                                </tr>
+                                                {% endfor %}
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="text-right">
+                                        <a href="{% url 'edit_jadwal' divisi_id tahun bulan %}" class="btn btn-warning p-2 m-3"> Edit</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% endfor %}
+                    
+                    </div>
+                </div>
+                {% endfor %} 
+
+            {% else %}
+                <div class="alert alert-warning">
+                    Tidak ada data jadwal yang ditemukan.
+                </div>
+            {% endif %}
+            <style>
+                .table-responsive {
+                overflow-x: auto;
+            }
+            .sticky-header {
+                position: sticky;
+                top: 0; 
+                z-index: 10;
+                background-color: #414141ff; 
+            }
+            .table-bordered th:nth-child(1),
+            .table-bordered td:nth-child(1) {
+                position: sticky;
+                left: 0;
+                z-index: 15;
+                min-width: 80px;
+                top: 0;
+                background-color: #e9ecef;
+            }
+
+            /* Kolom Nama Karyawan (Kolom 2) */
+            .table-bordered th:nth-child(2),
+            .table-bordered td:nth-child(2) {
+                position: sticky;
+                left: 80px; 
+                z-index: 15;
+                min-width: 150px; 
+                top: 0;
+                background-color: #e9ecef; 
+            }
+            .table-bordered td:nth-child(1),
+            .table-bordered td:nth-child(2) {
+                background-color: white;
+            }
+            .table-bordered th:nth-child(1),
+            .table-bordered th:nth-child(2) {
+                background-color: #414141ff !important; 
+            }
+            </style>
+        </div>
+    </div>
+    <!-- /.card-body -->
+</div>
+<!-- /.card -->
+
+<!-- Modal Buat Jadwal -->
+<div class="modal fade" id="modalBuatJadwal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header bg-primary">
+        <h4 class="modal-title text-white">Buat Jadwal Baru</h4>
+        <button type="button" class="close" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <form method="POST" action="{% url 'buat_jadwal' %}">
+        {% csrf_token %}
+
+        <div class="modal-body">
+          
+          <div class="form-group">
+            <label>Bulan</label>
+            <select class="form-control" name="bulan" required>
+              <option value="" selected disabled>-- Pilih Bulan --</option>
+              <option value="1">Januari</option>
+              <option value="2">Februari</option>
+              <option value="3">Maret</option>
+              <option value="4">April</option>
+              <option value="5">Mei</option>
+              <option value="6">Juni</option>
+              <option value="7">Juli</option>
+              <option value="8">Agustus</option>
+              <option value="9">September</option>
+              <option value="10">Oktober</option>
+              <option value="11">November</option>
+              <option value="12">Desember</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tahun</label>
+            <input type="number" class="form-control" id="tahun" name="tahun" required>
+          </div>
+          <div class="form-group">
+            <label>Divisi</label>
+            <select class="form-control" name="divisi" required>
+              <option value="" selected disabled>-- Pilih Divisi --</option>
+              {% for divisi in divisi_list %}
+              <option value="{{ divisi.id }}">{{ divisi.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+        </div>
+
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">Lanjutkan</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'assets/plugins/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'assets/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/dist/js/adminlte.min.js' %}"></script>
+
+
+{% if messages %}
+<script>
+    {% for message in messages %}
+    Swal.fire({
+        icon: "{{ message.tags }}",  
+        title: "{{ message.tags|capfirst }}",
+        text: "{{ message }}",
+        showConfirmButton: false,
+        timer: 3000
+    });
+    {% endfor %}
+</script>
+{% endif %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(document).on('click', '.btn-hapus', function(e){
+    e.preventDefault();
+
+    var url = $(this).attr("data-url");
+
+    Swal.fire({
+        title: 'Yakin ingin menghapus data ini?',
+        text: "Data yang sudah dihapus tidak bisa dikembalikan!",
+        icon: 'warning',
+        showCancelButton: true,
+        cancelButtonColor: '#E0A800',
+        confirmButtonColor: '#d33',
+        cancelButtonText: 'Batal',
+        confirmButtonText: 'Ya, hapus!',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = url;
+        }
+    });
+});
+</script>
+{% endblock%}

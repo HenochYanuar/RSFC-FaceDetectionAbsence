@@ -1,0 +1,106 @@
+{% extends 'layouts/layout.html' %}
+{% block content %}
+
+<style>
+    /* Kolom pertama (Nama Karyawan) tetap saat scroll */
+    .sticky-col {
+        position: sticky;
+        left: 0;
+        background: white;
+        z-index: 10;
+    }
+
+    /* Header kolom pertama */
+    .sticky-col-header {
+        position: sticky;
+        left: 0;
+        background: #6c757d; /* sama seperti header abu-abu */
+        color: white;
+        z-index: 11;
+    } 
+
+    table.table-sm td,
+    table.table-sm th {
+        padding: 4px !important;
+        font-size: 13px;
+    }
+
+    select.form-control-sm {
+        padding: 1px 4px !important;
+        height: 28px;
+    }
+
+    .table-responsive {
+        max-height: 75vh;
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+    .col-tanggal {
+        min-width: 100px;
+        white-space: nowrap;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 75vh;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header bg-primary">
+        <h3 class="card-title text-white">
+            Input Jadwal Karyawan - {{ bulan_text }} {{ tahun }}
+        </h3>
+    </div>
+
+    <form method="POST" action="{% url 'save_jadwal' %}">
+        {% csrf_token %}
+        <input type="hidden" name="bulan" value="{{ bulan }}">
+        <input type="hidden" name="tahun" value="{{ tahun }}">
+
+        <div class="card-body table-responsive p-0">
+            <table class="table table-bordered table-sm text-center">
+                <thead class="bg-secondary text-white">
+                    <tr>
+                        <th class="sticky-col-header" style="min-width: 180px;">Nama Karyawan</th>
+
+                        {% for tgl in tanggal_list %}
+                            <th class="col-tanggal">{{ tgl }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td class="sticky-col text-left font-weight-bold">{{ user.name }}</td>
+
+                        {% for tgl in tanggal_list %}
+                        <td class="col-tanggal">
+                            <select 
+                                class="form-control form-control-sm"
+                                name="shift_{{ user.nik }}_{{ tgl }}"
+                            >
+                                <option value="">-</option>
+                                {% for schedule in schedules %}
+                                    <option value="{{ schedule.id }}">{{ schedule.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer text-right">
+            <button type="submit" class="btn btn-success">
+                <i class="fa fa-save"></i> Simpan Jadwal
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
