@@ -6,6 +6,9 @@ class Users(models.Model):
     name = models.CharField(max_length=100)
     photo = models.ImageField(upload_to='static/img')
     divisi = models.CharField(max_length=100,null=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
+    password = models.CharField(max_length=100)
+    is_admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

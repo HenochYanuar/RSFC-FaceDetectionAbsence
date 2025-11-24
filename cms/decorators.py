@@ -15,7 +15,16 @@ def login_auth(view_func):
 
 def superadmin_required(view_func):
     def wrapper(request, *args, **kwargs):
-        if request.session.get('is_superadmin') != 1:
+        if request.session.get('is_admin') != 2:
+            messages.error(request, "Anda tidak memiliki akses ke halaman ini.")
+            return redirect('/admins/err403')
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+def admin_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.session.get('is_admin') != 1:
             messages.error(request, "Anda tidak memiliki akses ke halaman ini.")
             return redirect('/admins/err403')
         return view_func(request, *args, **kwargs)

@@ -1,10 +1,10 @@
 from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect , get_object_or_404
-from .decorators import login_auth, superadmin_required
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.http import JsonResponse
 from django.contrib import messages
+from .decorators import *
 from app.models import *
 from .models import *
 import calendar
@@ -15,23 +15,23 @@ import base64
 
 def login(request):
     if request.method == 'POST':
-        username = request.POST['username']
+        email = request.POST['email']
         password = request.POST['password']
 
         try:
-            user = get_object_or_404(Admins, username=username)
+            user = get_object_or_404(Users, email=email)
 
             if check_password(password, user.password):
-              request.session['nik_id'] = user.nik_id
-              request.session['is_superadmin'] = user.is_superadmin
+              request.session['nik_id'] = user.nik
+              request.session['is_admin'] = user.is_admin
 
-              if user.is_superadmin == 1:  
+              if user.is_admin == 2:  
                 return redirect('/admins/dashboard')
-              else:
+              elif user.is_admin == 1:
                 return redirect('/admins/mapping_jadwal')
                   
         except Admins.DoesNotExist:
-            messages.error(request, 'Invalid username or password')
+            messages.error(request, 'Invalid email or password')
             return redirect('/admins/login') 
     return render(request, 'admin/login.html')
 
@@ -46,6 +46,7 @@ def err403(request):
     return render(request, 'admin/403.html')
 
 @login_auth 
+@admin_required
 @superadmin_required
 def dashboard(request):
     # del request.session['nik_id']
@@ -59,6 +60,7 @@ def dashboard(request):
     return render(request, 'admin/dashboard.html', context)
 
 @login_auth
+@admin_required
 @superadmin_required
 def divisi_master(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
@@ -74,6 +76,7 @@ def divisi_master(request):
     return render(request, 'admin/divisi_master/index.html', context)
 
 @login_auth
+@admin_required
 @superadmin_required
 def addDivisi(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
@@ -106,6 +109,7 @@ def addDivisi(request):
     return render(request, 'admin/divisi_master/addForm.html', context)
 
 @login_auth
+@admin_required
 @superadmin_required
 def editDivisi(request, id):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
@@ -137,6 +141,7 @@ def editDivisi(request, id):
     return render(request, 'admin/divisi_master/editForm.html', context)
 
 @login_auth
+@admin_required
 @superadmin_required
 def deleteDivisi(request, id):
     try:
@@ -151,6 +156,7 @@ def deleteDivisi(request, id):
       return redirect('/admins/divisi_master')
     
 @login_auth
+@admin_required
 @superadmin_required
 def jadwal_master(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
@@ -166,6 +172,7 @@ def jadwal_master(request):
     return render(request, 'admin/jadwal_master/index.html', context)
 
 @login_auth
+@admin_required
 @superadmin_required
 def addJadwal(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
@@ -195,6 +202,7 @@ def addJadwal(request):
     return render(request, 'admin/jadwal_master/addForm.html', context)
 
 @login_auth
+@admin_required
 @superadmin_required
 def editJadwal(request, id):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
@@ -230,6 +238,7 @@ def editJadwal(request, id):
     return render(request, 'admin/jadwal_master/editForm.html', context)
 
 @login_auth
+@admin_required
 @superadmin_required
 def deleteJadwal(request, id):
     try:
@@ -244,6 +253,7 @@ def deleteJadwal(request, id):
       return redirect('/admins/jadwal_master')
     
 @login_auth
+@admin_required
 @superadmin_required
 def addUser(request):
     if request.method == 'POST':
@@ -284,6 +294,7 @@ def addUser(request):
     return render(request, 'admin/addUser.html', context)
 
 @login_auth
+@admin_required
 def mapping_jadwal(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
     divisi_list = MasterDivisions.objects.all().order_by('name')
@@ -341,6 +352,7 @@ def mapping_jadwal(request):
     return render(request, "admin/mapping/index.html", context)
 
 @login_auth
+@admin_required
 def buat_jadwal(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
@@ -377,6 +389,7 @@ def buat_jadwal(request):
     return render(request, "admin/mapping/addForm.html", context)
 
 @login_auth
+@admin_required
 def save_jadwal(request):
     if request.method == "POST":
         bulan = int(request.POST['bulan'])
@@ -433,6 +446,7 @@ def save_jadwal(request):
         return redirect('/admins/mapping_jadwal')
    
 @login_auth
+@admin_required
 def edit_jadwal(request, divisi_id, tahun, bulan):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
     from datetime import datetime
@@ -481,6 +495,7 @@ def edit_jadwal(request, divisi_id, tahun, bulan):
     return render(request, "admin/mapping/editForm.html", context)
 
 @login_auth  
+@admin_required
 def update_jadwal(request):
     if request.method == "POST":
         bulan = int(request.POST['bulan'])
@@ -550,6 +565,7 @@ def update_jadwal(request):
         return redirect('/admins/mapping_jadwal')
 
 @login_auth
+@admin_required
 @superadmin_required
 def index_absen(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
@@ -565,6 +581,7 @@ def index_absen(request):
     return render(request, 'admin/absen/index.html', context)
 
 @login_auth
+@admin_required
 @superadmin_required
 def absen(request, divisi_id):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
@@ -600,7 +617,9 @@ def absen(request, divisi_id):
 
     return render(request, 'admin/absen/list_absen.html', context)
 
-
+@login_auth
+@admin_required
+@superadmin_required
 def cuti_master(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
@@ -614,6 +633,9 @@ def cuti_master(request):
 
     return render(request, 'admin/cuti_master/index.html', context)
 
+@login_auth
+@admin_required
+@superadmin_required
 def addCuti(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
@@ -639,6 +661,9 @@ def addCuti(request):
     }
     return render(request, 'admin/cuti_master/addForm.html', context)
 
+@login_auth
+@admin_required
+@superadmin_required
 def editCuti(request, id):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
@@ -671,6 +696,9 @@ def editCuti(request, id):
     }
     return render(request, 'admin/cuti_master/editForm.html', context)
 
+@login_auth
+@admin_required
+@superadmin_required
 def deleteCuti(request, id):
     try:
       cuti = get_object_or_404(MasterLeaves, id=id)
