@@ -6,10 +6,13 @@ from django.contrib import messages
 from django.db.models import Q
 from .decorators import *
 from app.models import *
+import face_recognition
 from .models import *
 import calendar
 import datetime
 import base64
+import pickle
+import io
 
 # Create your views here.
 
@@ -266,40 +269,59 @@ def deleteJadwal(request, id):
 @superadmin_required
 def addUser(request):
     if request.method == 'POST':
-      nik = request.POST['nik']
-      name = request.POST['name']
-      email = request.POST['email']
-      password = request.POST['password']
-      divisi = request.POST['divisi']
-      photo_data = request.POST.get('photo', '')
+        nik = request.POST['nik']
+        name = request.POST['name']
+        email = request.POST['email']
+        password = request.POST['password']
+        divisi = request.POST['divisi']
+        photo_data = request.POST.get('photo', '')
 
-      hash_password = make_password(password)
+        hash_password = make_password(password)
 
-      if photo_data:
-        try:
-          # Decode base64 image from the photo data
-          format, imgstr = photo_data.split(';base64,')
-          ext = format.split('/')[-1]
-          data = ContentFile(base64.b64decode(imgstr), name=f'{nik}.{ext}')
+        if photo_data:
+            try:
+                format, imgstr = photo_data.split(';base64,')
+                ext = format.split('/')[-1]
+                img_bytes = base64.b64decode(imgstr)
+                
+                photo_file = ContentFile(img_bytes, name=f'{nik}.{ext}')
 
-          user = Users(
-              nik=nik,
-              name=name,
-              email=email,
-              password=hash_password,
-              divisi=divisi,
-              photo=data,
-          )
-          user.save()
+                image_stream = io.BytesIO(img_bytes)
+                loaded_image = face_recognition.load_image_file(image_stream, mode='RGB')
+                
+                encodings = face_recognition.face_encodings(loaded_image)
 
-          messages.success(request, 'Data karyawan berhasil diupload.')
-          return redirect('/admins/addUser')
-        except Exception as e:
-            messages.error(request, f'Gagal mengupload data karyawan: {e}')
-      else:
-        messages.error(request, 'Foto tidak tersedia atau tidak valid.')
+                if len(encodings) == 0:
+                    messages.error(request, 'Wajah tidak terdeteksi dalam foto. Pendaftaran dibatalkan.')
+                    return redirect('/admins/addUser')
+                
+                face_enc = encodings[0] 
+                
+                serialized_encoding = pickle.dumps(face_enc)
+                
+                user = Users(
+                    nik=nik,
+                    name=name,
+                    email=email,
+                    password=hash_password,
+                    divisi=divisi,
+                    photo=photo_file, 
+                    face_encoding=serialized_encoding 
+                )
+                user.save()
 
-      return redirect('/admins/addUser')
+                messages.success(request, 'Data karyawan berhasil diupload dan encoding wajah disimpan.')
+                return redirect('/admins/addUser')
+            
+            except Exception as e:
+                messages.error(request, f'Gagal mengupload data karyawan atau menghitung encoding: {e}')
+                print(f"Error detail: {e}") 
+                return redirect('/admins/addUser')
+                
+        else:
+            messages.error(request, 'Foto tidak tersedia atau tidak valid.')
+
+        return redirect('/admins/addUser')
     
     divisi_list = MasterDivisions.objects.all()
     context = {

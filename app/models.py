@@ -8,6 +8,7 @@ class Users(models.Model):
     divisi = models.CharField(max_length=100,null=True)
     email = models.EmailField(unique=True, null=True, blank=True)
     password = models.CharField(max_length=100)
+    face_encoding = models.BinaryField(null=True, blank=True)
     is_admin = models.IntegerField(choices=[
         (0, 'User'),
         (1, 'Admin'),
