@@ -1,9 +1,7 @@
 from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect , get_object_or_404
-from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
-from django.http import JsonResponse
 from django.contrib import messages
 from django.db.models import Q
 from .decorators import *
@@ -906,7 +904,9 @@ def editKaryawan(request, nik):
         divisi = request.POST.get('divisi')
         
         is_admin_input = request.POST.get('is_admin')
-        is_admin = True if is_admin_input == 'on' else False
+        is_admin = 1 if is_admin_input == 'on' else 0
+
+        is_admin = 2 if detail_user.is_admin == 2 else is_admin
         
         try:
             detail_user.name = name

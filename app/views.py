@@ -339,6 +339,7 @@ def jadwal(request):
 
     return render(request, "user/jadwal/index.html", context)
 
+@login_auth
 def presensi(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
@@ -373,6 +374,7 @@ def presensi(request):
 
     return render(request, "user/absensi/index.html", context)
 
+@login_auth
 def profile(request, nik):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
@@ -402,21 +404,20 @@ def profile(request, nik):
             
             return redirect('profile', nik=detail_user.nik) 
 
-    all_divisions = MasterDivisions.objects.all()
-
     division_detail = None
     if detail_user.divisi:
         try:
-            division_detail = MasterDivisions.objects.get(name=detail_user.divisi)
+            division_detail = MasterDivisions.objects.get(id=detail_user.divisi)
         except MasterDivisions.DoesNotExist:
             pass
 
     context = {
         'user': user,
         'detail_user': detail_user,
-        'all_divisions': all_divisions,
         'division_detail': division_detail,
         'title': 'Profile ' + detail_user.name
     }
 
     return render(request, 'user/profile/index.html', context)
+
+

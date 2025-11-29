@@ -44,7 +44,7 @@
                                 <div class="mb-3">
                                     <label for="id_name" class="form-label">Nama Lengkap</label>
                                     <input type="text" class="form-control" id="id_name" name="name" 
-                                           value="{{ detail_user.name }}" required>
+                                           value="{{ detail_user.name }}" required readonly>
                                 </div>
 
                                 <div class="mb-3">
@@ -55,19 +55,8 @@
 
                                 <div class="mb-3">
                                     <label for="id_divisi" class="form-label">Divisi</label>
-                                    <select class="form-control" id="id_divisi" name="divisi" required>
-
-                                        <option value="" selected disabled>--- Pilih Divisi ---</selected>
-                                        
-                                        {% for div in all_divisions %}
-                                                <option value="{{ div.id }}"
-                                                {% if div.id == detail_user.divisi %}
-                                                selected
-                                                {% endif %}
-                                                >{{ div.name }}</option>
-                                        {% endfor %}
-                                        
-                                    </select>
+                                    <input type="text" class="form-control" id="id_divisi" name="divisi" 
+                                           value="{{ division_detail.name }}" required readonly>
                                 </div>
 
                                 <hr class="my-4">
