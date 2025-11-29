@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib import messages
+from django.db.models import Q
 from .decorators import *
 from app.models import *
 from .models import *
@@ -831,31 +832,39 @@ def detail_pengajuan(request, id):
 @login_auth
 @superadmin_required
 def karyawan(request):
-    user = get_object_or_404(Users, nik=request.session['nik_id'])
+    user = get_object_or_404(Users, nik=request.session.get('nik_id'))
+
+    query = request.GET.get('q', '').strip()
 
     all_users = Users.objects.all().order_by('nik')
+
+    if query:
+        all_users = all_users.filter(
+            Q(nik__icontains=query) |
+            Q(name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(divisi__icontains=query)
+        )
 
     paginator = Paginator(all_users, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    divisi_names = set(u.divisi for u in page_obj.object_list if u.divisi)
+    divisi_ids = set(u.divisi for u in page_obj.object_list if u.divisi)
 
     divisions_map = {
         div.id: div
-        for div in MasterDivisions.objects.filter(id__in=divisi_names)
+        for div in MasterDivisions.objects.filter(id__in=divisi_ids)
     }
 
     for u in page_obj.object_list:
-        if u.divisi in divisions_map:
-            u.divisi = divisions_map[u.divisi]
-        else:
-            u.divisi = None 
+        u.divisi = divisions_map.get(u.divisi, None)
 
     context = {
         'user': user,
         'page_obj': page_obj,
         'title': 'Daftar Karyawan',
+        'query': query,
     }
 
     return render(request, 'admin/users/index.html', context)

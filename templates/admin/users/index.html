@@ -15,10 +15,46 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Daftar Seluruh Karyawan (Total: {{ page_obj.paginator.count }})</h3>
-                                <div class="card-tools">
-                                    <a href="{% url 'addUser' %}" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Tambah Karyawan Baru </a>
+                                <div class="row">
+                                    <div class="col-md-6 d-flex align-items-center">
+                                        <h3 class="card-title m-0">
+                                            Daftar Seluruh Karyawan (Total: {{ page_obj.paginator.count }})
+                                        </h3>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="card-tools float-right">
+                                            <a href="{% url 'addUser' %}" class="btn btn-primary btn-sm">
+                                                <i class="fa fa-plus"></i> Tambah Karyawan Baru
+                                            </a>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <form method="GET" class="form-inline">
+
+                                            <input type="text" 
+                                                name="q" 
+                                                class="form-control mr-2 mb-2" 
+                                                placeholder="Cari nama, NIK, email, divisi..."
+                                                style="width: 250px;"
+                                                value="{{ query }}">
+
+                                            <button type="submit" class="btn btn-primary mb-2">
+                                                <i class="fa fa-search"></i> Cari
+                                            </button>
+
+                                            {% if query %}
+                                            <a href="{{ request.path }}" class="btn btn-danger ml-2 mb-2">
+                                                <i class="fa fa-times"></i> Clear
+                                            </a>
+                                            {% endif %}
+                                        </form>
+                                    </div>
+                                </div>
+
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -96,7 +132,9 @@
                                             {% for num in page_obj.paginator.page_range %}
                                                 {% if num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                                                     <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                                                        <a class="page-link" href="{{ request.path }}?page={{ num }}">{{ num }}</a>
+                                                        <a class="page-link" href="{{ request.path }}?page={{ num }}{% if query %}&q={{ query }}{% endif %}">
+                                                            {{ num }}
+                                                        </a>
                                                     </li>
                                                 {% endif %}
                                             {% endfor %}
