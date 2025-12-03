@@ -333,7 +333,10 @@ def addUser(request):
 @admin_required
 def mapping_jadwal(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
-    divisi_list = MasterDivisions.objects.all().order_by('name')
+    divisi_list = MasterDivisions.objects.filter(id=user.divisi)
+
+    if user.is_admin == 2:
+        divisi_list = MasterDivisions.objects.all().order_by('name')
 
     today = datetime.date.today()
 
@@ -619,11 +622,20 @@ def index_absen(request):
 def absen(request, divisi_id):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
+    selected_month = request.GET.get('month')
+    selected_year = request.GET.get('year')
+
     list_absen = (
         InAbsences.objects.filter(nik__divisi=divisi_id)
         .select_related('nik', 'schedule')
         .order_by('date_in').order_by('nik')
     )
+
+    if selected_month and selected_year:
+        list_absen = list_absen.filter(
+            date_in__month=selected_month,
+            date_in__year=selected_year
+        )
 
     absensi_per_bulan = {}
 
@@ -681,17 +693,32 @@ def absen(request, divisi_id):
 
         absensi_per_bulan[bulan_key].append(absen)
 
+    absensi_per_bulan = dict(sorted(
+        absensi_per_bulan.items(),
+        key=lambda x: x[0], 
+        reverse=True
+    )[:6])
+
     bulan_labels = {
         key: datetime.strptime(key, "%Y-%m").strftime("%B %Y")
         for key in absensi_per_bulan.keys()
     }
+
+    month_list = [(f"{i:02}", calendar.month_name[i]) for i in range(1, 13)]
+    year_list = InAbsences.objects.dates('date_in', 'year')
+
+    divisi = get_object_or_404(MasterDivisions, id=divisi_id)
 
     context = {
         'user': user,
         'divisi_id': divisi_id,
         'absensi_per_bulan': absensi_per_bulan,
         'bulan_labels': bulan_labels,
-        'title': f'Absen Divisi {divisi_id}',
+        'month_list': month_list,
+        'year_list': year_list,
+        'selected_month': selected_month,
+        'selected_year': selected_year,
+        'title': f'Absen Divisi {divisi.name}',
     }
 
     return render(request, 'admin/absen/list_absen.html', context)

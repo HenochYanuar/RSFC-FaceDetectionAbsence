@@ -2,7 +2,40 @@
 {% load static %}
 {% load dict_filter %}
 {% block content %}
+<div class="card card-header bg-white">
 <h3>{{ title }}</h3>
+<form method="GET" class="mb-4">
+    <div class="row">
+        <div class="col-md-3">
+            <label>Bulan</label>
+            <select name="month" class="form-control">
+                <option value="">-- Semua Bulan --</option>
+                {% for val, label in month_list %}
+                    <option value="{{ val }}" {% if selected_month == val %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label>Tahun</label>
+            <select name="year" class="form-control">
+                <option value="">-- Semua Tahun --</option>
+                {% for y in year_list %}
+                    <option value="{{ y.year }}" {% if selected_year == y.year|stringformat:"s" %}selected{% endif %}>
+                        {{ y.year }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-3 align-self-end">
+            <button class="btn btn-primary w-100">Filter</button>
+        </div>
+    </div>
+</form>
+</div>
 
 {% if absensi_per_bulan %}
     
