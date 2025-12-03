@@ -709,6 +709,17 @@ def absen(request, divisi_id):
 
     divisi = get_object_or_404(MasterDivisions, id=divisi_id)
 
+    print_month = request.GET.get('print_month')
+
+    if print_month:
+        items = absensi_per_bulan.get(print_month, [])
+
+        return render(request, 'admin/absen/print_absen.html', {
+            'bulan_label': datetime.strptime(print_month, "%Y-%m").strftime("%B %Y"),
+            'items': items,
+            'title': f'Rekap Absensi Divisi {divisi.name}'
+        })
+
     context = {
         'user': user,
         'divisi_id': divisi_id,

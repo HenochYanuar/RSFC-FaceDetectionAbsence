@@ -44,11 +44,15 @@
         <div class="card-header bg-info text-white">
             <h4 class="card-title text-2xl font-semibold">{{ bulan_labels|dict_get:bulan_key }}</h4>
             <div class="card-tools">
-                <button type="button" class="btn btn-tool text-white"
-                    data-card-widget="collapse">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
+            <!-- Tombol Print -->
+            <a href="?print_month={{ bulan_key }}" target="_blank" class="btn btn-sm btn-danger mr-2">
+                <i class="fas fa-print"></i> Cetak
+            </a>
+
+            <button type="button" class="btn btn-tool text-white" data-card-widget="collapse">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
         </div>
         <div class="card-body p-0">
             <table class="table table-bordered table-sm">

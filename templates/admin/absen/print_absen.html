@@ -1,0 +1,170 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .header-container {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 15px;
+            font-family: Arial, sans-serif;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .logo-cell {
+            width: 80px;
+            text-align: left;
+            padding-left: 5px;
+        }
+
+        .logo-img {
+            width: 70px;
+        }
+
+        .text-cell {
+            text-align: center;
+            padding-right: 100px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .header-sub {
+            font-size: 13px;
+            margin-top: 3px;
+        }
+
+        .line-1 {
+            border: 1px solid black;
+            margin: 2px 0 0 0;
+        }
+
+        .line-2 {
+            border: 2px solid black;
+            margin: 2px 0 10px 0;
+        }
+
+        .header-report-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            margin-top: 5px;
+            font-size: 16px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 6px;
+            border-bottom: 2px solid #767676ff;
+            border-top: 2px solid #767676ff;
+            background: #eaeaeaff;
+        }
+
+        /* Hapus semua border pada body */
+        td {
+            padding: 6px;
+            border: none;
+        }
+
+        /* Nomor kolom lebih sempit */
+        .col-no {
+            width: 40px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        @media print {
+            button { display: none; }
+            body { margin: 0; }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="header-container">
+    <table class="header-table">
+        <tr>
+            <td class="logo-cell">
+                <img src="{% static '/assets/images/rsfc_logo.png' %}" alt="Logo" class="logo-img">
+            </td>
+
+            <td class="text-cell">
+                <div class="header-title">RS Umum Fitri Candra</div>
+                <div class="header-sub">
+                    Jl. Brigjend Katamso, Selogiri, Wonogiri, Jawa Tengah<br>
+                    (0273) 5328899<br>
+                    E-mail : rsb_fitricandra@ymail.com
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <hr class="line-1">
+    <hr class="line-2">
+
+    <div class="header-report-title">
+       {{ title }} Bulan {{ bulan_label }}
+    </div>
+</div>
+
+<button onclick="window.print()">Print Sekarang</button>
+
+<table>
+    <thead>
+        <tr>
+            <th class="col-no">No</th>
+            <th>NIK</th>
+            <th>Nama</th>
+            <th>Shift</th>
+            <th>Tanggal Masuk</th>
+            <th>Status Masuk</th>
+            <th>Tanggal Keluar</th>
+            <th>Status Keluar</th>
+            <th>Keterlambatan</th>
+            <th>Total Durasi</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for absen in items %}
+        <tr>
+            <td class="col-no">{{ forloop.counter }}</td>
+            <td>{{ absen.nik.nik }}</td>
+            <td>{{ absen.nik.name }}</td>
+            <td>{{ absen.schedule.name|default:"-" }}</td>
+            <td>{{ absen.date_in|date:"d-m-Y H:i" }}</td>
+            <td {% if absen.status_in == 'Tepat Waktu' %} style="color:green;" {% elif absen.status_in == 'Terlambat' %} style="color: red;" {% elif absen.status_in == 'Cuti' %} style="color:yellow;" {% else %} style="color:gray;" {% endif %}>{{ absen.status_in }}</td>
+            <td>{{ absen.date_out|date:"d-m-Y H:i"|default:"-" }}</td>
+            <td {% if absen.status_out == 'Tepat Waktu' %} style="color:green;" {% elif absen.status_out == 'Pulang Cepat' %} style="color: red;" {% elif absen.status_out == 'Cuti' %} style="color:yellow;" {% else %} style="color:gray;" {% endif %}>{{ absen.status_out }}</td>
+            <td>{{ absen.late_time|default:"-" }}</td>
+            <td>{{ absen.total_work|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>
