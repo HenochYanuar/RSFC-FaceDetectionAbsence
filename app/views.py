@@ -3,23 +3,71 @@ from django.core.files.storage import default_storage
 from django.contrib.auth.hashers import make_password
 from django.core.files.base import ContentFile  
 from datetime import datetime, timedelta
+from cms.decorators import login_auth
 from django.http import JsonResponse
 from django.contrib import messages
-from cms.decorators import login_auth
 from datetime import date, datetime
+from django.core.cache import cache
 from cms.models import *
 import face_recognition
 from .models import *
+from PIL import Image
+import numpy as np
 import calendar
 import base64
 import pickle
+import cv2
+import io
 
 # Create your views here.
 
-def absence(request):
-    if request.method == 'POST':
-        photo_data = request.POST.get('photo')
+def calculate_dynamic_threshold(encodings, safety_factor=0.85):
+    if len(encodings) < 2:
+        return 0.45 
 
+    distances = []
+
+    for i in range(len(encodings)):
+        for j in range(i + 1, len(encodings)):
+            d = np.linalg.norm(encodings[i] - encodings[j])
+            distances.append(d)
+
+    min_dist = np.min(distances)
+    print(f'{min_dist}')
+
+    dynamic_threshold = min_dist * safety_factor
+
+    dynamic_threshold = max(0.35, min(dynamic_threshold, 0.6))
+
+    return round(dynamic_threshold, 3)
+
+def detect_glare(img_bytes):
+    img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+    img = np.array(img)
+
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+    bright_pixels = np.sum(gray > 230) / gray.size
+
+    print(f'bright = {bright_pixels}')
+
+    if bright_pixels > 0.12:
+        return True, "Terdeteksi pantulan glare yang tidak natural."
+
+    b, g, r = cv2.split(img)
+    blue_ratio = np.mean(b) / (np.mean(r) + 1)
+
+    if blue_ratio > 1.25:
+        return True, "Warna dominan biru, terindikasi foto layar. Pakai foto dari HP ya ??"
+
+    return False, None
+
+def absence(request):
+    if request.method != 'POST':
+        return render(request, 'user/absence.html')
+
+    try:
+        photo_data = request.POST.get('photo')
         if not photo_data:
             return JsonResponse({'status': 'error', 'message': 'Foto tidak valid'})
 
@@ -27,159 +75,177 @@ def absence(request):
             format, imgstr = photo_data.split(';base64,')
             ext = format.split('/')[-1]
             img_bytes = base64.b64decode(imgstr)
+        except:
+            return JsonResponse({'status': 'error', 'message': 'Format foto tidak valid'})
+        
+        # -----------------------------
+        # CEK GLARE SEBELUM PROCESSING
+        # -----------------------------
+        # is_glare, glare_msg = detect_glare(img_bytes)
+        # if is_glare:
+        #     return JsonResponse({
+        #         'status': 'error',
+        #         'message': f'Foto tidak valid: {glare_msg}'
+        #     })
 
-            temp_name = f'temp_photo.{ext}'
-            temp_path = default_storage.save(temp_name, ContentFile(img_bytes))
-            temp_full = default_storage.path(temp_path)
 
-            uploaded_img = face_recognition.load_image_file(temp_full)
-            uploaded_encs = face_recognition.face_encodings(uploaded_img)
+        temp_name = f"temp_photo.{ext}"
+        temp_path = default_storage.save(temp_name, ContentFile(img_bytes))
+        temp_full = default_storage.path(temp_path)
 
-            if len(uploaded_encs) == 0:
-                default_storage.delete(temp_path)
-                return JsonResponse({'status': 'error', 'message': 'Wajah tidak terdeteksi (Mungkin Kurang Tengah)'})
+        uploaded_img = face_recognition.load_image_file(temp_full)
+        uploaded_encs = face_recognition.face_encodings(uploaded_img)
 
-            uploaded_enc = uploaded_encs[0]
-            
-            all_users = Users.objects.all()
+        if not uploaded_encs:
+            return JsonResponse({'status': 'error', 'message': 'Wajah tidak terdeteksi (Mungkin kurang tengah)'})
+
+        uploaded_enc = uploaded_encs[0]
+
+        cached_enc = cache.get("known_face_encodings")
+        cached_users = cache.get("known_face_users")
+
+        if cached_enc is None:
+            users = Users.objects.exclude(face_encoding=None).only("nik", "name", "face_encoding")
+
             known_encodings = []
             user_list = []
-            
-            for user in all_users:
+
+            for u in users:
                 try:
-                    if user.face_encoding:
-                        # Deserialisasi encoding dari BinaryField
-                        face_enc = pickle.loads(user.face_encoding)
-                        known_encodings.append(face_enc)
-                        user_list.append(user)
-                        
-                except Exception as e:
-                    print(f"Error memuat encoding untuk user {user.nik}: {e}")
+                    known_encodings.append(pickle.loads(u.face_encoding))
+                    user_list.append(u)
+                except:
                     continue
-            
-            matches = face_recognition.compare_faces(known_encodings, uploaded_enc, tolerance=0.45)
-            
-            matched_user = None
-            for is_match, user in zip(matches, user_list):
-                if is_match:
-                    matched_user = user
-                    break 
-            
-            if matched_user is None:
-                default_storage.delete(temp_path)
-                return JsonResponse({'status': 'error', 'message': 'Wajah Anda tidak terdaftar. Daftarkan dulu !!!'})
 
-            user = matched_user
-            now = datetime.now()
-            today = now.date()
+            cache.set("known_face_encodings", known_encodings, 3600)
+            cache.set("known_face_users", user_list, 3600)
+        else:
+            known_encodings = cached_enc
+            user_list = cached_users
 
-            # CEK SUDAH IN dan OUT (TIDAK BOLEH ABSEN 3 KALI)
-            already_done = InAbsences.objects.filter( 
-                nik=user, 
-                date_in__date=today, 
-                date_out__isnull=False 
-            ).first()
-            
-            if already_done:
-                status = already_done.schedule.name
-                messages = {
-                    'Libur': 'Tidak ada jadwal untuk hari ini. Libur... Boss',
-                    'Cuti': 'Tidak ada jadwal untuk hari ini. Katanya mau cuti !!'
-                }
-                message = messages.get(status, 'Anda kan sudah absen pulang hari ini...')
+        if not known_encodings:
+            return JsonResponse({'status': 'error', 'message': 'Tidak ada data wajah terdaftar.'})
 
-                default_storage.delete(temp_path)
-                return JsonResponse({
-                    'status': 'error',
-                    'message': message
-                })
 
-            # CEK APAKAH SUDAH ADA ABSEN IN YANG BELUM OUT
-            existing_absen = InAbsences.objects.filter(
-                nik=user,
-                date_out__isnull=True
-            ).order_by('-date_in').first()
+        threshold = calculate_dynamic_threshold(known_encodings)
+        print(f'{threshold}')
 
-            if existing_absen:
-                schedule_in = existing_absen.schedule
-                date_in_day = existing_absen.date_in.date()
+        distances = face_recognition.face_distance(known_encodings, uploaded_enc)
+        best_idx = np.argmin(distances)
+        best_distance = distances[best_idx]
+        print(f'{distances}')
+        print(f'{user_list}')
 
-                jadwal_in = datetime.combine(date_in_day, schedule_in.start_time)
-                jadwal_out = datetime.combine(date_in_day, schedule_in.end_time)
+        print(f'{best_distance}')
+        if best_distance > threshold:
+            return JsonResponse({'status': 'error', 'message': 'Wajah tidak cocok (tidak terdaftar)'})
 
-                if jadwal_out < jadwal_in:
-                    jadwal_out += timedelta(days=1)
+        user = user_list[best_idx]
+        print(f'{user.name}')
+        now = datetime.now()
+        today = now.date()
 
-                if now < jadwal_out:
-                    status_out = "Pulang Cepat"
-                else:
-                    status_out = "Tepat Waktu"
+        # -------------------------------
+        # CEK SUDAH FULL ABSEN HARI INI
+        # -------------------------------
+        if InAbsences.objects.filter(
+            nik=user,
+            date_in__date=today,
+            date_out__isnull=False
+        ).exists():
 
-                existing_absen.date_out = now
-                existing_absen.status_out = status_out
-                existing_absen.save()
-
-                default_storage.delete(temp_path)
-                return JsonResponse({
-                    'status': 'success',
-                    'type': 'Pulang',
-                    'message': f'Absen pulang berhasil',
-                    'status_absen': status_out,
-                    'nik': user.nik,
-                    'name': user.name,
-                    'date': now.strftime('%Y-%m-%d'),
-                    'time': now.strftime('%H:%M:%S'),
-                    'minor_message': 'Hati-hati di Jalan 🛵'
-                })
-
-            # TIDAK ADA ABSEN IN → LAKUKAN ABSEN IN
-            schedule_today = MappingSchedules.objects.filter(
-                nik=user,
-                date=today
-            ).first()
-
-            if not schedule_today or schedule_today.schedule.name == "Libur":
-                default_storage.delete(temp_path)
-                return JsonResponse({
-                    'status': 'error',
-                    'message': 'Tidak ada jadwal untuk hari ini. Libur... Boss'
-                })
-
-            schedule_master = schedule_today.schedule
-            jadwal_in_today = datetime.combine(today, schedule_master.start_time)
-
-            if now <= jadwal_in_today:
-                status_in = "Tepat Waktu"
-            else:
-                status_in = "Terlambat"
-
-            InAbsences.objects.create(
-                nik=user,
-                date_in=now,
-                status_in=status_in,
-                schedule=schedule_master 
+            schedule_name = (
+                MappingSchedules.objects.filter(nik=user, date=today)
+                .values_list("schedule__name", flat=True)
+                .first()
             )
 
-            default_storage.delete(temp_path)
+            msg_map = {
+                "Libur": "Tidak ada jadwal untuk hari ini. Libur... Boss",
+                "Cuti": "Tidak ada jadwal untuk hari ini. Katanya mau cuti !!"
+            }
+
+            return JsonResponse({
+                'status': 'error',
+                'message': msg_map.get(schedule_name, "Anda sudah absen pulang hari ini...")
+            })
+
+        # -------------------------------
+        # CEK ABSEN IN TANPA OUT → ABSEN OUT
+        # -------------------------------
+        existing_absen = (
+            InAbsences.objects.filter(nik=user, date_out__isnull=True)
+            .only("date_in", "schedule")
+            .order_by('-date_in').first()
+        )
+
+        if existing_absen:
+            sched = existing_absen.schedule
+            date_in_day = existing_absen.date_in.date()
+
+            jadwal_in = datetime.combine(date_in_day, sched.start_time)
+            jadwal_out = datetime.combine(date_in_day, sched.end_time)
+            if jadwal_out < jadwal_in:
+                jadwal_out += timedelta(days=1)
+
+            status_out = "Pulang Cepat" if now < jadwal_out else "Tepat Waktu"
+
+            existing_absen.date_out = now
+            existing_absen.status_out = status_out
+            existing_absen.save()
+
             return JsonResponse({
                 'status': 'success',
-                'type': 'Masuk',
-                'message': f'Absen masuk berhasil',
-                'status_absen': status_in,
+                'type': 'Pulang',
+                'message': 'Absen pulang berhasil',
+                'status_absen': status_out,
                 'nik': user.nik,
                 'name': user.name,
                 'date': now.strftime('%Y-%m-%d'),
                 'time': now.strftime('%H:%M:%S'),
-                'minor_message': 'Semangat Bekerja 💪🏼'
+                'minor_message': 'Hati-hati di Jalan 🛵'
             })
 
+        # -------------------------------
+        # ABSEN MASUK
+        # -------------------------------
+        schedule_today = MappingSchedules.objects.filter(
+            nik=user, date=today
+        ).select_related("schedule").first()
 
-        except Exception as e:
-            if 'temp_path' in locals():
-                default_storage.delete(temp_path)
-            return JsonResponse({'status': 'error', 'message': f'Error: {e}'})
-        
-    return render(request, 'user/absence.html')
+        if not schedule_today or schedule_today.schedule.name == "Libur":
+            return JsonResponse({'status': 'error', 'message': 'Tidak ada jadwal untuk hari ini. Libur... Boss'})
+
+        sched = schedule_today.schedule
+        jadwal_in_today = datetime.combine(today, sched.start_time)
+
+        status_in = "Tepat Waktu" if now <= jadwal_in_today else "Terlambat"
+
+        InAbsences.objects.create(
+            nik=user,
+            date_in=now,
+            status_in=status_in,
+            schedule=sched
+        )
+
+        return JsonResponse({
+            'status': 'success',
+            'type': 'Masuk',
+            'message': 'Absen masuk berhasil',
+            'status_absen': status_in,
+            'nik': user.nik,
+            'name': user.name,
+            'date': now.strftime('%Y-%m-%d'),
+            'time': now.strftime('%H:%M:%S'),
+            'minor_message': 'Semangat Bekerja 💪🏼'
+        })
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': f'Error: {e}'})
+
+    finally:
+        if 'temp_path' in locals():
+            default_storage.delete(temp_path)
 
 @login_auth
 def pengajuan_cuti(request):
