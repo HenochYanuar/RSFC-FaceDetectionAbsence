@@ -63,7 +63,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
       <a href="" class="brand-link ">
         <img style="background-color: white;" src="{% static '/assets/images/rsfc_logo.png' %}" alt="AdminLTE Logo"
           class="brand-image img-circle elevation-3" style="opacity: .8">
-        <span class="brand-text font-weight-light">RSFC Absensi</span>
+        <span class="brand-text font-weight-light">RSFC Presensi</span>
       </a>
 
       <!-- Sidebar -->
@@ -99,7 +99,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
         
         <nav class="mt-2">
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-            {% if user.is_admin != 0 %}
+            {% if user.is_admin == 2 %}
             <li class="nav-item active">
               <a href="{% url 'karyawan' %}" class="nav-link">
                 <i class="nav-icon fa fa-users fa-table"></i>
@@ -107,17 +107,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
               </a>
             </li>
             <li class="nav-item active">
-              <a href="{% url 'mapping_jadwal' %}" class="nav-link">
-                <i class="nav-icon fa fa-puzzle-piece"></i>
-                <p>Mapping Jadwal Karyawan</p>
-              </a>
-            </li>
-            {% endif %}
-            {% if user.is_admin == 2 %}
-            <li class="nav-item active">
               <a href="{% url 'absen' %}" class="nav-link">
                 <i class="nav-icon fa fa-solid fa-table"></i>
-                <p>Data Absen</p>
+                <p>Data Presensi</p>
               </a>
             </li>
             <li class="nav-item active">
@@ -130,6 +122,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
               <a href="{% url 'addUser' %}" class="nav-link">
                 <i class="nav-icon fas fa-user-plus"></i>
                 <p>Tambah Data Karyawan</p>
+              </a>
+            </li>
+            {% endif %}
+            {% if user.is_admin != 0 %}
+            <li class="nav-item active">
+              <a href="{% url 'mapping_jadwal' %}" class="nav-link">
+                <i class="nav-icon fa fa-puzzle-piece"></i>
+                <p>Mapping Jadwal Karyawan</p>
               </a>
             </li>
             {% endif %}
@@ -163,7 +163,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
               <a href="{% url 'absence' %}" class="nav-link ">
                 <i class="fa fa-fw fa-clock nav-icon"></i>
                 <p>
-                    Masuk Absen
+                    Masuk Presensi
                 </p>
               </a>
             </li>
