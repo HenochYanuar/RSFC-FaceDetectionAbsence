@@ -5,51 +5,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi Kamera</title>
+    <title>Presnsi RS Fitri Candra</title>
+    <link rel="shortcut icon" href="{% static 'assets/images/rsfc_logo.png' %}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href={% static '/assets/styles/absence.css' %}>
 </head>
 
-<body onload="startCamera()">
+<body>
     <div class="container">
         <h2>Absensi Karyawan</h2>
         <center>
-            <p>
-                <span id="dateDisplay"></span><br>
-                <span id="timeDisplay"></span>
-            </p>
+        <p>
+            <span id="dateDisplay"></span><br>
+            <span id="timeDisplay"></span>
+        </p>
         </center>
 
         <form id="absenForm" method="POST" enctype="multipart/form-data" action="">
-            {% csrf_token %}
-            <div class="video-container">
-                <video autoplay></video>
-            </div>
+        {% csrf_token %}
+        <div class="video-container">
+            <video id="video" playsinline style="width: 100%; height: auto;"></video>
+            <canvas id="overlay" style="position:absolute; left:0; top:0;"></canvas>
+        </div>
 
-            
-            <!-- Hidden input for the captured photo in base64 format -->
-            <input type="hidden" name="photo" id="photoInput">
-            <div class="button-container">
-                <button type="button" onclick="capturePhoto()" id="captureBtn">Capture Photo</button>
-                <button type="submit">Absen</button>
-            </div>
+        <input type="hidden" name="photo" id="photoInput">
+
+        <div class="button-container">
+            <button style="display:None;" type="button" id="manualCaptureBtn">Capture</button>
+            <button style="display:None;" type="submit">Absen</button>
+        </div>
         </form>
+
         <div id="resultDisplay" style="display:none;">
-            <h3>Hasil Absensi:</h3>
-            <p id="nikResult"></p>
-            <p id="nameResult"></p>
-            <p id="dateResult"></p>
+        <h3>Hasil Absensi:</h3>
+        <p id="nikResult"></p>
+        <p id="nameResult"></p>
+        <p id="dateResult"></p>
+        </div>
+    </div>
+
+    <div id="introModal" class="intro-modal">
+        <div class="intro-content">
+            <h2>Kedipkan Mata Setelah "START"</h2>
+            <div id="modalVideoContainer" class="video-preview-container">
+                <video id="introVideo" width="100%" autoplay loop muted playsinline>
+                    <source src="{% static '/assets/videos/iki_seng_kanggo.mp4' %}" type="video/mp4">
+                    Browser Anda tidak mendukung tag video.
+                </video>
+            </div>
+            <p>
+                Tekan tombol "START" untuk presensi
+            </p>
+            <button id="startBtn" class="intro-btn">START</button>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <!-- MediaPipe FaceMesh (browser) -->
+    <script src="{% static '/assets/dist/js/mediapipe/face_mesh.js' %}"></script>
+    <script src="{% static '/assets/dist/js/mediapipe/camera_utils.js' %}"></script>
+    <script src="{% static '/assets/dist/js/mediapipe/drawing_utils.js' %}"></script>
+    {% comment %} <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script> {% endcomment %}
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         const ABSENCE_URL = "{% url 'absence' %}";
+        const CSRF_TOKEN = "{{ csrf_token }}";
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src= {% static '/assets/scripts/absence.js' %}></script>
+    
+    {% comment %} <script src= "{% static '/assets/scripts/absence.js' %}"></script> {% endcomment %}
+    <script src="{% static '/assets/scripts/absence_autocapture.js' %}"></script>
 
 </body>
 
