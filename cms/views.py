@@ -455,19 +455,17 @@ def save_jadwal(request):
                             is_there = InAbsences.objects.filter(
                                 nik=user,
                                 date_in__date=date.date(),
-                                status_in="Libur/Cuti"
+                                status_in="Libur"
                             ).exists()
-
-                            print(f'{is_there}')
 
                             if not is_there:
                                 InAbsences.objects.create(
                                     nik=user,
                                     date_in=date_str,
-                                    status_in="Libur/Cuti",
+                                    status_in="Libur",
                                     schedule=shift,
                                     date_out=date_str,
-                                    status_out="Libur/Cuti"
+                                    status_out="Libur"
                                 )
 
                     mapping, created = MappingSchedules.objects.get_or_create(
@@ -685,6 +683,10 @@ def absen(request, divisi_id):
                 total_minutes = int(diff_seconds // 60)
                 total_work = str(timedelta(minutes=total_minutes))
 
+        if absen.schedule.id == 'CUTI' or absen.schedule.id == 'LIBUR':
+            total_work = '00:00:00'
+            total_minutes = 0
+        
         absen.total_work = total_work
         absen.total_work_minutes = total_minutes
 
@@ -872,7 +874,7 @@ def detail_pengajuan(request, id):
 
             pengajuan.save()
 
-            if status == "approved":
+            if status == "Approved":
                 from datetime import datetime, timedelta
                 start = datetime.strptime(start_date, "%Y-%m-%d").date()
                 end = datetime.strptime(end_date, "%Y-%m-%d").date()
@@ -882,7 +884,7 @@ def detail_pengajuan(request, id):
                     defaults={
                         "name": "Cuti",
                         "start_time": "00:00",
-                        "end_time": "23:59",
+                        "end_time": "00:00",
                     }
                 )
 
@@ -917,6 +919,14 @@ def detail_pengajuan(request, id):
                             schedule=cuti_schedule,
                             date=current
                         )
+                    else:
+                        schedule = get_object_or_404(MappingSchedules, nik=pengajuan.nik, date=current)
+                        try:
+                            schedule.schedule = cuti_schedule
+                            schedule.save()
+                        except Exception as e:
+                            messages.error(request, f'Gagal menyimpan data persetujuan pengajuan cuti. Error: {e}')
+                            return redirect('persetujuan_cuti')
 
                     current += timedelta(days=1)
 
@@ -931,7 +941,7 @@ def detail_pengajuan(request, id):
        'user': user,
        'pengajuan': pengajuan,
        'title': 'Detail Pengajuan Cuti Karyawan',
-       'status': ['pending', 'approved', 'rejected']
+       'status': ['Pending', 'Approved', 'Rejected']
     }
 
     return render(request, 'admin/cuti_persetujuan/detail.html', context)
