@@ -256,7 +256,7 @@ def pengajuan_cuti(request):
     if request.method == 'POST':
         leave_type_id = request.POST['cuti']
         leave_type_obj = get_object_or_404(MasterLeaves, id=leave_type_id)
-        photo_file = request.FILES.get('photo')
+        # photo_file = request.FILES.get('photo')
         start_date = request.POST['start_date']
         end_date = request.POST['end_date']
         reason = request.POST['reason']
@@ -301,8 +301,8 @@ def pengajuan_cuti(request):
             reason=reason,
         )
 
-        if photo_file:
-            new_leave_request.photo = photo_file
+        # if photo_file:
+        #     new_leave_request.photo = photo_file
 
         new_leave_request.save()
 
@@ -336,7 +336,7 @@ def edit_pengajuan_cuti(request, id):
     if request.method == 'POST':
         leave_type_id = request.POST['cuti']
         leave_type_obj = get_object_or_404(MasterLeaves, id=leave_type_id)
-        photo_file = request.FILES.get('photo') 
+        # photo_file = request.FILES.get('photo') 
         start_date = request.POST['start_date']
         end_date = request.POST['end_date']
         reason = request.POST['reason']
@@ -349,8 +349,8 @@ def edit_pengajuan_cuti(request, id):
             pengajuan.end_date = end_date
             pengajuan.reason = reason
 
-            if(photo_file):
-               pengajuan.photo = photo_file
+            # if(photo_file):
+            #    pengajuan.photo = photo_file
 
             pengajuan.save() 
 

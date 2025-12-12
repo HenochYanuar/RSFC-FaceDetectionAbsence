@@ -15,10 +15,10 @@
           <table class="table table-striped" id="tableprint" width="100%" cellspacing="0">
             <thead>
               <tr class='text-center'>
-                <th class='col-1'>Nama Cuti</th>
+                <th class='col-2'>Nama Cuti</th>
                 <th class='col-2'>Tanggal</th>
-                <th class='col-2'>Alasan Cuti</th>
-                <th class='col-2'>Foto Cuti</th>
+                <th class='col-3'>Alasan Cuti</th>
+                {% comment %} <th class='col-2'>Foto Cuti</th> {% endcomment %}
                 <th class='col-1'>Status Cuti</th>
                 <th class='col-2'>Catatan</th>
                 <th class='col-2'>Actions</th>
@@ -31,9 +31,9 @@
                 <td>{{ pengajuan.leave_type.name }}</td>
                 <td>{{ pengajuan.start_date }} s.d. {{ pengajuan.end_date }}</td>
                 <td class="text-left">{{ pengajuan.reason }}</td>
-                <td>
+                {% comment %} <td>
                   <img src="{{ pengajuan.photo.url }}" style="width:150px" alt="Surat Pengajuan Cuti">
-                </td>
+                </td> {% endcomment %}
                 <td>
                   {% if pengajuan.status == 'Approved' %}
                     <span class="badge badge-primary"  style="font-size: 18px;">{{ pengajuan.status }}</span>
@@ -86,7 +86,7 @@
         <input type='text' name="nik_id" id="nik_id" value="{{ user.nik }}" hidden>
         <div class="modal-body">
           <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <div class="form-group">
                 <label>Jenis Cuti</label>
                 <select class="form-control" name="cuti" required>
@@ -97,30 +97,31 @@
                 </select>
               </div>
             </div>
-            
-            <div class="col-md-6">
-              <div class="form-group">
-                <label>Foto Pendukung</label>
-                <input type="file" class="form-control" id="photo" name="photo" accept="image/*"> 
-              </div>
-            </div>
-          </div>
-          
-          <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <div class="form-group">
                 <label>Tanggal Mulai</label>
                 <input type="date" class="form-control" id="start_date" name="start_date" required>
               </div>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
               <div class="form-group">
                 <label>Tanggal Selesai</label>
                 <input type="date" class="form-control" id="end_date" name="end_date" required>
               </div>
             </div>
+            
+            {% comment %} <div class="col-md-6">
+              <div class="form-group">
+                <label>Foto Pendukung</label>
+                <input type="file" class="form-control" id="photo" name="photo" accept="image/*"> 
+              </div>
+            </div> {% endcomment %}
           </div>
+          
+          {% comment %} <div class="row">
+            
+          </div> {% endcomment %}
 
           <div class="form-group">
             <label>Alasan</label>

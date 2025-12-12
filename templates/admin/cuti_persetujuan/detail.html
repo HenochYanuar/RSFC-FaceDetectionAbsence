@@ -45,12 +45,12 @@
             <input type="text" class="form-control mb-2" id="cuti" name="cuti" readonly value="{{ pengajuan.reason}}"> 
           </div>
         </div>
-        <div class="col-md-6">
+        {% comment %} <div class="col-md-6">
           <div class="form-group">
             <label>Foto Pendukung</label><br>
             <a href="{{ pengajuan.photo.url }}" class="ml-2"><img src="{{ pengajuan.photo.url }}" style="width:150px" alt="Surat Pengajuan Cuti"></a>
           </div>
-        </div>
+        </div> {% endcomment %}
       </div>
       
       <div class="row">
