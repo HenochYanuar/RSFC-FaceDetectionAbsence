@@ -2,62 +2,60 @@
 {% load static %}
 {% load dict_filter %}
 {% block content %}
+
 <div class="card card-header bg-white">
-<h3>{{ title }}</h3>
-<form method="GET" class="mb-4">
-    <div class="row">
-        <div class="col-md-3">
-            <label>Bulan</label>
-            <select name="month" class="form-control">
-                <option value="">-- Semua Bulan --</option>
-                {% for val, label in month_list %}
-                    <option value="{{ val }}" {% if selected_month == val %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
+    <h3>{{ title }}</h3>
 
-        <div class="col-md-3">
-            <label>Tahun</label>
-            <select name="year" class="form-control">
-                <option value="">-- Semua Tahun --</option>
-                {% for y in year_list %}
-                    <option value="{{ y.year }}" {% if selected_year == y.year|stringformat:"s" %}selected{% endif %}>
-                        {{ y.year }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
+    <!-- FILTER TANGGAL -->
+    <form method="GET" class="mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <label>Dari Tanggal</label>
+                <input type="date" name="start_date" class="form-control"
+                       value="{{ start_date }}">
+            </div>
 
-        <div class="col-md-3 align-self-end">
-            <button class="btn btn-primary w-100">Filter</button>
+            <div class="col-md-3">
+                <label>Sampai Tanggal</label>
+                <input type="date" name="end_date" class="form-control"
+                       value="{{ end_date }}">
+            </div>
+
+            <div class="col-md-3">
+                <label>&nbsp;</label>
+                <button class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </div>
         </div>
-    </div>
-</form>
+    </form>
 </div>
 
-{% if absensi_per_bulan %}
-    
-    {% for bulan_key, items in absensi_per_bulan.items %}
-    <div class="card card-primary mb-5 shadow collapsed-card">
-        <div class="card-header bg-info text-white">
-            <h4 class="card-title text-2xl font-semibold">{{ bulan_labels|dict_get:bulan_key }}</h4>
-            <div class="card-tools">
-            <!-- Tombol Print -->
-            <a href="?print_month={{ bulan_key }}" target="_blank" class="btn btn-sm btn-danger mr-2">
-                <i class="fas fa-print"></i> Cetak
-            </a>
+{% if is_range_filter %}
 
-            <button type="button" class="btn btn-tool text-white" data-card-widget="collapse">
-                <i class="fas fa-plus"></i>
-            </button>
+    <div class="card shadow mt-4">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0 card-title">
+                Periode {{ start_date }} s/d {{ end_date }}
+            </h4>
+            <div class="card-tools">
+                <a href="?print_range=1&start_date={{ start_date }}&end_date={{ end_date }}"
+                target="_blank"
+                class="btn btn-danger btn-sm">
+                    <i class="fas fa-print"></i> Cetak
+                </a>
+
+                <button type="button" class="btn btn-tool text-white"
+                        data-card-widget="collapse">
+                    <i class="fas fa-minus"></i>
+                </button>
+            </div>
         </div>
-        </div>
+
         <div class="card-body p-0">
             <table class="table table-bordered table-sm">
-                <thead class="bg-black text-white">
-                    <tr class="text-center">
+                <thead class="bg-dark text-white text-center">
+                    <tr>
                         <th>NIK</th>
                         <th>Nama</th>
                         <th>Shift</th>
@@ -70,7 +68,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for absen in items %}
+                    {% for absen in list_absen %}
                     <tr class="text-center">
                         <td>{{ absen.nik.nik }}</td>
                         <td class="text-left">{{ absen.nik.name }}</td>
@@ -140,12 +138,8 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8">
-                            <div class="card shadow p-2 mt-4">
-                                <div class="card-body text-center">
-                                    <h4 class="text-xl font-bold">Tidak ada data absen bulan ini.</h4>
-                                </div>
-                            </div>
+                        <td colspan="9" class="text-center text-muted p-4">
+                            Tidak ada data absensi pada periode ini
                         </td>
                     </tr>
                     {% endfor %}
@@ -153,15 +147,131 @@
             </table>
         </div>
     </div>
-    {% endfor %}
 
 {% else %}
-    <div class="card shadow p-4 mt-4">
-        <div class="card-body text-center">
-            <h1 class="text-2xl font-bold text-danger">Data Absen Kosong</h1>
-            <p>Belum ada data absensi yang tercatat untuk divisi ini.</p>
+
+    {% if absensi_per_bulan %}
+        {% for bulan_key, items in absensi_per_bulan.items %}
+        <div class="card card-primary mb-5 shadow collapsed-card">
+            <div class="card-header bg-info text-white">
+                <h4 class="card-title">{{ bulan_labels|dict_get:bulan_key }}</h4>
+                <div class="card-tools">
+                    <a href="?print_month={{ bulan_key }}" target="_blank"
+                       class="btn btn-sm btn-danger mr-2">
+                        <i class="fas fa-print"></i> Cetak
+                    </a>
+
+                    <button type="button" class="btn btn-tool text-white"
+                            data-card-widget="collapse">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <table class="table table-bordered table-sm">
+                    <thead class="bg-black text-white text-center">
+                        <tr>
+                            <th>NIK</th>
+                            <th>Nama</th>
+                            <th>Shift</th>
+                            <th>Tanggal Masuk</th>
+                            <th>Status Masuk</th>
+                            <th>Tanggal Keluar</th>
+                            <th>Status Keluar</th>
+                            <th>Keterlambatan</th>
+                            <th>Total Durasi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for absen in items %}
+                            <tr class="text-center">
+                                <td>{{ absen.nik.nik }}</td>
+                                <td class="text-left">{{ absen.nik.name }}</td>
+                                <td>
+                                    {% if absen.schedule %}
+                                        <div class="font-weight-bold">
+                                        {{ absen.schedule.name }} 
+                                        <small>( {{ absen.schedule.start_time|time:"H:i" }} )</small>
+                                        </div>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ absen.date_in|date:"d M Y H:i" }}</td>
+                                <td class="
+                                        {% if absen.status_in == 'Terlambat' %}
+                                            text-danger 
+                                        {% elif absen.status_in == 'Tepat Waktu' %}
+                                            text-success 
+                                        {% elif absen.status_in == 'Libur'%}
+                                            text-secondary 
+                                        {% elif absen.status_in == 'Cuti'%}
+                                            text-warning 
+                                        {% endif %}
+                                    ">
+                                    {{ absen.status_in }}
+                                </td>
+                                <td>
+                                    {% if absen.date_out %}
+                                    {{ absen.date_out|date:"d M Y H:i" }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td class="
+                                        {% if absen.status_out == 'Pulang Cepat' %}
+                                            text-danger 
+                                        {% elif absen.status_out == 'Tepat Waktu' %}
+                                            text-success 
+                                        {% elif absen.status_out == 'Libur'%}
+                                            text-secondary 
+                                        {% elif absen.status_out == 'Cuti'%}
+                                            text-warning 
+                                        {% else %}
+                                        {% endif %}
+                                    ">
+                                    {{ absen.status_out|default:"-" }}
+                                </td>
+                                <td>
+                                    {% if absen.late_minutes > 0 %}
+                                        <span class="text-danger">{{ absen.late_time }} ({{ absen.late_minutes }} menit)</span>
+                                    {% elif absen.status_in == 'Cuti' %}
+                                        <span class="text-warning">Cuti</span>
+                                    {% elif absen.status_in == 'Libur'%}
+                                        <span class="text-secondary">Libur</span>
+                                    {% else %}
+                                        <span class="text-success">Tidak Terlambat</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if absen.total_work %}
+                                        {{ absen.total_work }} ({{ absen.total_work_minutes }} menit)
+                                    {% else %}
+                                        <span class="text-muted">Belum pulang</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted p-4">
+                                    Tidak ada data absensi pada periode ini
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-    
+        {% endfor %}
+    {% else %}
+        <div class="card shadow p-4 mt-4">
+            <div class="card-body text-center">
+                <h4 class="text-danger">Data Absen Kosong</h4>
+            </div>
+        </div>
+    {% endif %}
+
 {% endif %}
+
 {% endblock %}

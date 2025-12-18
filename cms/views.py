@@ -691,101 +691,55 @@ def index_absen(request):
 def absen(request, divisi_id):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
-    selected_month = request.GET.get('month')
-    selected_year = request.GET.get('year')
+    print_month = request.GET.get('print_month')
+    print_range = request.GET.get('print_range')
+
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    is_range_filter = bool(start_date and end_date)
 
     list_absen = (
-        InAbsences.objects.filter(nik__divisi=divisi_id)
+        InAbsences.objects
+        .filter(nik__divisi=divisi_id)
         .select_related('nik', 'schedule')
-        .order_by('date_in').order_by('nik')
+        .order_by('nik', 'date_in')
     )
 
-    if selected_month and selected_year:
-        list_absen = list_absen.filter(
-            date_in__month=selected_month,
-            date_in__year=selected_year
+    from datetime import datetime
+
+    if print_range and start_date and end_date:
+        start = timezone.make_aware(
+            datetime.strptime(start_date, "%Y-%m-%d")
         )
+        end = timezone.make_aware(
+            datetime.strptime(end_date, "%Y-%m-%d")
+        ).replace(hour=23, minute=59, second=59)
 
-    absensi_per_bulan = {}
+        items = list_absen.filter(date_in__range=(start, end))
 
-    from datetime import datetime, timedelta
+        for absen in items:
+            _hitung_absen(absen)
 
-    for absen in list_absen:
-        bulan_key = absen.date_in.strftime("%Y-%m")
+        divisi = get_object_or_404(MasterDivisions, id=divisi_id)
 
-        late_minutes = 0
-        late_time = None
-
-        if absen.schedule and absen.schedule.start_time:
-
-            scheduled_naive = datetime.combine(
-                absen.date_in.date(),
-                absen.schedule.start_time
-            )
-            from django.utils import timezone
-
-            scheduled_in = timezone.make_aware(
-                scheduled_naive,
-                timezone.get_current_timezone()
-            )
-
-            actual_in = absen.date_in
-
-            diff_seconds = (actual_in - scheduled_in).total_seconds()
-
-            if diff_seconds > 0:
-                late_minutes = int(diff_seconds // 60)
-                late_time = str(timedelta(minutes=late_minutes))
-
-        absen.late_minutes = late_minutes
-        absen.late_time = late_time
-
-        total_work = None
-        total_minutes = 0
-
-        if absen.date_out:
-
-            actual_in = absen.date_in
-            actual_out = absen.date_out
-
-            diff_seconds = (actual_out - actual_in).total_seconds()
-
-            if diff_seconds > 0:
-                total_minutes = int(diff_seconds // 60)
-                total_work = str(timedelta(minutes=total_minutes))
-
-        if absen.schedule.id == 'CUTI' or absen.schedule.id == 'LIBUR':
-            total_work = '00:00:00'
-            total_minutes = 0
-        
-        absen.total_work = total_work
-        absen.total_work_minutes = total_minutes
-
-        if bulan_key not in absensi_per_bulan:
-            absensi_per_bulan[bulan_key] = []
-
-        absensi_per_bulan[bulan_key].append(absen)
-
-    absensi_per_bulan = dict(sorted(
-        absensi_per_bulan.items(),
-        key=lambda x: x[0], 
-        reverse=True
-    )[:6])
-
-    bulan_labels = {
-        key: datetime.strptime(key, "%Y-%m").strftime("%B %Y")
-        for key in absensi_per_bulan.keys()
-    }
-
-    month_list = [(f"{i:02}", calendar.month_name[i]) for i in range(1, 13)]
-    year_list = InAbsences.objects.dates('date_in', 'year')
-
-    divisi = get_object_or_404(MasterDivisions, id=divisi_id)
-
-    print_month = request.GET.get('print_month')
+        return render(request, 'admin/absen/print_absen.html', {
+            'bulan_label': f'Periode {start_date} s/d {end_date}',
+            'items': items,
+            'title': f'Rekap Absensi Divisi {divisi.name}'
+        })
 
     if print_month:
+        absensi_per_bulan = {}
+
+        for absen in list_absen:
+            _hitung_absen(absen)
+            key = absen.date_in.strftime("%Y-%m")
+            absensi_per_bulan.setdefault(key, []).append(absen)
+
         items = absensi_per_bulan.get(print_month, [])
+
+        divisi = get_object_or_404(MasterDivisions, id=divisi_id)
 
         return render(request, 'admin/absen/print_absen.html', {
             'bulan_label': datetime.strptime(print_month, "%Y-%m").strftime("%B %Y"),
@@ -793,19 +747,99 @@ def absen(request, divisi_id):
             'title': f'Rekap Absensi Divisi {divisi.name}'
         })
 
-    context = {
-        'user': user,
-        'divisi_id': divisi_id,
-        'absensi_per_bulan': absensi_per_bulan,
-        'bulan_labels': bulan_labels,
-        'month_list': month_list,
-        'year_list': year_list,
-        'selected_month': selected_month,
-        'selected_year': selected_year,
-        'title': f'Absen Divisi {divisi.name}',
+    if is_range_filter:
+        start = timezone.make_aware(
+            datetime.strptime(start_date, "%Y-%m-%d")
+        )
+        end = timezone.make_aware(
+            datetime.strptime(end_date, "%Y-%m-%d")
+        ).replace(hour=23, minute=59, second=59)
+
+        list_absen = list_absen.filter(date_in__range=(start, end))
+
+        for absen in list_absen:
+            _hitung_absen(absen)
+
+        divisi = get_object_or_404(MasterDivisions, id=divisi_id)
+
+        return render(request, 'admin/absen/list_absen.html', {
+            'user': user,
+            'divisi_id': divisi_id,
+            'is_range_filter': True,
+            'list_absen': list_absen,
+            'start_date': start_date,
+            'end_date': end_date,
+            'title': f'Absen Divisi {divisi.name}',
+        })
+
+    absensi_per_bulan = {}
+
+    for absen in list_absen:
+        _hitung_absen(absen)
+        key = absen.date_in.strftime("%Y-%m")
+        absensi_per_bulan.setdefault(key, []).append(absen)
+
+    absensi_per_bulan = dict(sorted(
+        absensi_per_bulan.items(),
+        reverse=True
+    )[:6])
+
+    bulan_labels = {
+        k: datetime.strptime(k, "%Y-%m").strftime("%B %Y")
+        for k in absensi_per_bulan
     }
 
-    return render(request, 'admin/absen/list_absen.html', context)
+    divisi = get_object_or_404(MasterDivisions, id=divisi_id)
+
+    return render(request, 'admin/absen/list_absen.html', {
+        'user': user,
+        'divisi_id': divisi_id,
+        'is_range_filter': False,
+        'absensi_per_bulan': absensi_per_bulan,
+        'bulan_labels': bulan_labels,
+        'title': f'Absen Divisi {divisi.name}',
+    })
+
+def _hitung_absen(absen):
+    from datetime import datetime, timedelta
+
+    absen.late_minutes = 0
+    absen.late_time = None
+    absen.total_work_minutes = 0
+    absen.total_work = None
+
+    if absen.schedule and absen.schedule.id in ('CUTI', 'LIBUR'):
+        absen.total_work = "00:00:00"
+        absen.total_work_minutes = 0
+        return
+
+    if absen.schedule and absen.schedule.start_time:
+        shift_start = timezone.make_aware(
+            datetime.combine(absen.date_in.date(), absen.schedule.start_time)
+        )
+
+        diff = (absen.date_in - shift_start).total_seconds()
+        if diff > 0:
+            absen.late_minutes = int(diff // 60)
+            absen.late_time = str(timedelta(minutes=absen.late_minutes))
+
+    if absen.date_out:
+        start_work = absen.date_in
+        end_work = absen.date_out
+
+        if absen.schedule and absen.schedule.end_time:
+            shift_start_time = absen.schedule.start_time
+            shift_end_time = absen.schedule.end_time
+
+            if shift_end_time < shift_start_time:
+                # shift lintas hari
+                if end_work.date() == start_work.date():
+                    end_work += timedelta(days=1)
+
+        total_seconds = (end_work - start_work).total_seconds()
+        if total_seconds > 0:
+            absen.total_work_minutes = int(total_seconds // 60)
+            absen.total_work = str(timedelta(minutes=absen.total_work_minutes))
 
 @login_auth
 @admin_required
