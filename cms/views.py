@@ -404,10 +404,10 @@ def addUser(request):
 @admin_required
 def mapping_jadwal(request):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
-    divisi_list = MasterDivisions.objects.filter(id=user.divisi)
+    # divisi_list = MasterDivisions.objects.filter(id=user.divisi)
 
-    if user.is_admin == 2:
-        divisi_list = MasterDivisions.objects.all().order_by('name')
+    # if user.is_admin == 2:
+    divisi_list = MasterDivisions.objects.all().order_by('name')
 
     today = datetime.date.today()
 
