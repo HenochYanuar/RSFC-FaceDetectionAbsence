@@ -129,10 +129,12 @@ def absence(request):
         # ======================================================
         # 5. LOAD CACHE ENCODING USER
         # ======================================================
+        db_count = Users.objects.exclude(face_encoding=None).count()
+
         cached_enc = cache.get("known_face_encodings")
         cached_users = cache.get("known_face_users")
 
-        if cached_enc is None:
+        if not cached_enc or len(cached_enc) != db_count:
             users = Users.objects.exclude(face_encoding=None).only(
                 "nik", "name", "face_encoding"
             )
