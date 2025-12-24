@@ -1,3 +1,4 @@
+from urllib import request
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.files.storage import default_storage
 from django.contrib.auth.hashers import make_password
@@ -151,6 +152,9 @@ def absence(request):
 
             cache.set("known_face_encodings", known_encodings, 3600)
             cache.set("known_face_users", user_list, 3600)
+
+            print("DB count:", db_count)
+            print("Cache count:", len(known_encodings))
         else:
             known_encodings = cached_enc
             user_list = cached_users
@@ -190,8 +194,54 @@ def absence(request):
         now = timezone.localtime(timezone.now())
         today = now.date()
         tz_jakarta = pytz.timezone('Asia/Jakarta')
+        start_of_day = timezone.make_aware(datetime.combine(today, time.min), tz_jakarta)
+        end_of_day = timezone.make_aware(datetime.combine(today, time.max), tz_jakarta)
 
-        # ---------- ABSEN PULANG ----------
+        # ------------------------------------------------------
+        # CEK JADWAL & STATUS (Libur/Cuti/Tidak Ada)
+        # ------------------------------------------------------
+        jadwal_list = MappingSchedules.objects.filter(
+            nik=user,
+            date=today
+        ).select_related("schedule").order_by("shift_order")
+
+        if not jadwal_list.exists():
+            return JsonResponse({'status': 'error', 'message': 'Tidak ada jadwal hari ini. Hubungi PJ/PIC jika ini sebuah kesalahan.'})
+
+        first_schedule_name = jadwal_list[0].schedule.name
+        msg_map = {
+            "Libur": "Tidak ada jadwal untuk hari ini. Libur... Boss",
+            "Cuti": "Tidak ada jadwal untuk hari ini. Katanya mau cuti !!"
+        }
+
+        if first_schedule_name in msg_map:
+            return JsonResponse({
+                'status': 'error',
+                'message': msg_map[first_schedule_name]
+            })
+        
+        # ================================
+        # AMBIL SEMUA JADWAL HARI INI
+        # ================================
+        jadwal_list = MappingSchedules.objects.filter(
+            nik=user,
+            date=today
+        ).select_related("schedule").order_by("shift_order")
+
+        if not jadwal_list.exists():
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Tidak ada jadwal hari ini'
+            })
+
+        # ================================
+        # ABSEN PULANG (SHIFT AKTIF)
+        # ================================
+        # existing_absen = InAbsences.objects.filter(
+        #     nik=user,
+        #     date_in__range=(start_of_day, end_of_day),
+        #     date_out__isnull=False
+        # ).exists()
         existing_absen = (
             InAbsences.objects.filter(nik=user, date_out__isnull=True)
             .only("date_in", "schedule")
@@ -205,7 +255,7 @@ def absence(request):
 
             jadwal_in = timezone.make_aware(datetime.combine(date_in_day, sched.start_time), tz_jakarta)
             jadwal_out = timezone.make_aware(datetime.combine(date_in_day, sched.end_time), tz_jakarta)
-            
+
             if jadwal_out < jadwal_in:
                 jadwal_out += timedelta(days=1)
 
@@ -215,10 +265,13 @@ def absence(request):
             existing_absen.status_out = status_out
             existing_absen.save()
 
+            time = MasterSchedules.objects.get(id=existing_absen.schedule.id)
+
             return JsonResponse({
                 'status': 'success',
                 'type': 'Pulang',
-                'message': 'Absen pulang berhasil',
+                'shift': existing_absen.shift_order,
+                'message': f'Absen pulang shift {time.start_time} berhasil',
                 'status_absen': status_out,
                 'nik': user.nik,
                 'name': user.name,
@@ -226,68 +279,55 @@ def absence(request):
                 'time': now.strftime('%H:%M:%S'),
                 'minor_message': 'Hati-hati di Jalan 🛵'
             })
-        
-        start_of_day = timezone.make_aware(datetime.combine(today, time.min))
-        end_of_day = timezone.make_aware(datetime.combine(today, time.max)) 
 
-        # ---------- CEK SUDAH ABSEN HARI INI ----------
-        if InAbsences.objects.filter(
-            nik=user,
-            date_in__range=(start_of_day, end_of_day),
-            date_out__isnull=False
-        ).exists():
+        # ================================
+        # ABSEN MASUK (SHIFT BERIKUTNYA)
+        # ================================
+        for jadwal in jadwal_list:
+            sudah_masuk = InAbsences.objects.filter(
+                nik=user,
+                shift_order=jadwal.shift_order,
+                date_in__range=(start_of_day, end_of_day),
+                date_out__isnull=False
+            ).exists()
 
-            schedule_name = (
-                MappingSchedules.objects.filter(nik=user, date=today)
-                .values_list("schedule__name", flat=True)
-                .first()
-            )
+            if not sudah_masuk:
+                sched = jadwal.schedule
 
-            msg_map = {
-                "Libur": "Tidak ada jadwal untuk hari ini. Libur... Boss",
-                "Cuti": "Tidak ada jadwal untuk hari ini. Katanya mau cuti !!"
-            }
-
-            return JsonResponse({
-                'status': 'error',
-                'message': msg_map.get(
-                    schedule_name,
-                    "Anda sudah absen pulang hari ini..."
+                jadwal_in_today = timezone.make_aware(
+                    datetime.combine(today, sched.start_time),
+                    tz_jakarta
                 )
-            })
 
-        # ---------- ABSEN MASUK ----------
-        schedule_today = MappingSchedules.objects.filter(
-            nik=user, date=today
-        ).select_related("schedule").first()
+                status_in = "Tepat Waktu" if now <= jadwal_in_today else "Terlambat"
 
-        if not schedule_today or schedule_today.schedule.name == "Libur":
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Tidak ada jadwal untuk hari ini. Libur... Boss'
-            })
+                InAbsences.objects.create(
+                    nik=user,
+                    date_in=now,
+                    status_in=status_in,
+                    schedule=sched,
+                    shift_order=jadwal.shift_order
+                )
 
-        sched = schedule_today.schedule
-        jadwal_in_today = timezone.make_aware(datetime.combine(today, sched.start_time), tz_jakarta)
-        status_in = "Tepat Waktu" if now <= jadwal_in_today else "Terlambat"
+                return JsonResponse({
+                    'status': 'success',
+                    'type': 'Masuk',
+                    'shift': jadwal.shift_order,
+                    'message': f'Absen masuk shift {jadwal.schedule.start_time} berhasil',
+                    'status_absen': status_in,
+                    'nik': user.nik,
+                    'name': user.name,
+                    'date': now.strftime('%Y-%m-%d'),
+                    'time': now.strftime('%H:%M:%S'),
+                    'minor_message': 'Semangat Bekerja 💪🏼'
+                })
 
-        InAbsences.objects.create(
-            nik=user,
-            date_in=now,
-            status_in=status_in,
-            schedule=sched
-        )
-
+        # ================================
+        # SEMUA SHIFT SELESAI
+        # ================================
         return JsonResponse({
-            'status': 'success',
-            'type': 'Masuk',
-            'message': 'Absen masuk berhasil',
-            'status_absen': status_in,
-            'nik': user.nik,
-            'name': user.name,
-            'date': now.strftime('%Y-%m-%d'),
-            'time': now.strftime('%H:%M:%S'),
-            'minor_message': 'Semangat Bekerja 💪🏼'
+            'status': 'error',
+            'message': 'Anda sudah absen pulang untuk semua shift hari ini.'
         })
 
     except Exception as e:
@@ -443,32 +483,55 @@ def jadwal(request):
     tahun = today.year
 
     bulan_text = calendar.month_name[bulan]
-
     total_hari = calendar.monthrange(tahun, bulan)[1]
 
+    # ================================
+    # AMBIL SEMUA JADWAL BULAN INI
+    # ================================
+    data = (
+        MappingSchedules.objects.filter(
+            nik=user,
+            date__month=bulan,
+            date__year=tahun
+        )
+        .select_related("schedule")
+        .order_by("date", "shift_order")
+    )
+
+    # ================================
+    # GROUP BY TANGGAL
+    # ================================
+    mapping = {}
+
+    for item in data:
+        day = item.date.day
+        sched = item.schedule
+
+        if day not in mapping:
+            mapping[day] = []
+
+        if sched.name in ["Libur", "Cuti"]:
+            mapping[day] = [sched.name]  # override semua shift
+        else:
+            mapping[day].append(
+                f"{sched.start_time.strftime('%H:%M')} - {sched.end_time.strftime('%H:%M')}"
+            )
+
+    # ================================
+    # BENTUK DATA PER HARI
+    # ================================
     jadwal_bulanan = []
-
-    data = MappingSchedules.objects.filter(
-        nik=user,
-        date__month=bulan,
-        date__year=tahun
-    ).select_related("schedule")
-
-    mapping = {
-        item.date.day: item.schedule.name 
-            if item.schedule.name in ["Libur", "Cuti"]
-            else item.schedule.start_time.strftime("%H:%M")
-        for item in data
-    }
 
     for d in range(1, total_hari + 1):
         current_date = date(tahun, bulan, d)
         hari_text = calendar.day_name[current_date.weekday()]
 
+        jadwal_hari = mapping.get(d, [])
+
         jadwal_bulanan.append({
             "tanggal": d,
             "hari": hari_text,
-            "jadwal": mapping.get(d, "-")
+            "jadwal": jadwal_hari if jadwal_hari else ["-"]
         })
 
     context = {
@@ -476,42 +539,54 @@ def jadwal(request):
         "jadwal_bulanan": jadwal_bulanan,
         "bulan_text": bulan_text,
         "tahun": tahun,
-        'title': 'Jadwal Saya'
+        "title": "Jadwal Saya"
     }
 
     return render(request, "user/jadwal/index.html", context)
 
 @login_auth
 def presensi(request):
+    from django.utils import timezone
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
-    today = date.today()
+    today = timezone.localdate()
     bulan = today.month
     tahun = today.year
 
+    start_month = timezone.make_aware(datetime(tahun, bulan, 1))
+    end_month = (
+        timezone.make_aware(datetime(tahun + 1, 1, 1))
+        if bulan == 12
+        else timezone.make_aware(datetime(tahun, bulan + 1, 1))
+    )
+
     absensis = InAbsences.objects.filter(
         nik=user,
-        date_in__month=bulan,
-        date_in__year=tahun
-    ).order_by('-date_in')
+        date_in__gte=start_month,
+        date_in__lt=end_month
+    ).select_related("schedule").order_by("date_in")
 
     absensi_bulanan = []
+
     for abs in absensis:
+        date_in_local = timezone.localtime(abs.date_in) if abs.date_in else None
+        date_out_local = timezone.localtime(abs.date_out) if abs.date_out else None
+
         absensi_bulanan.append({
-            "tanggal": abs.date_in.day,
-            "hari": abs.date_in.strftime("%A"),
-            "jam_in": abs.schedule.start_time.strftime("%H:%M") if abs.schedule.start_time else None,
+            "tanggal": date_in_local.day if date_in_local else "-",
+            "hari": date_in_local.strftime("%A") if date_in_local else "-",
+            "jam_in": date_in_local.strftime("%H:%M") if date_in_local else None,
             "status_in": abs.status_in,
-            "jam_out": abs.schedule.end_time.strftime("%H:%M") if abs.schedule.end_time else None,
+            "jam_out": date_out_local.strftime("%H:%M") if date_out_local else None,
             "status_out": abs.status_out,
         })
 
     context = {
-        'user': user,
+        "user": user,
         "bulan_text": calendar.month_name[bulan],
         "tahun": tahun,
         "absensi_bulanan": absensi_bulanan,
-        "title": 'Riwayat absen saya '
+        "title": "Riwayat absen saya"
     }
 
     return render(request, "user/absensi/index.html", context)

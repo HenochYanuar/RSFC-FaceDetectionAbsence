@@ -20,6 +20,7 @@ class MappingSchedules(models.Model):
     nik = models.ForeignKey('app.Users', on_delete=models.CASCADE)
     schedule = models.ForeignKey(MasterSchedules, on_delete=models.CASCADE)
     date = models.DateField()
+    shift_order = models.PositiveSmallIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
