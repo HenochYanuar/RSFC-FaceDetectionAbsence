@@ -78,15 +78,29 @@
 
                         {% for tgl in tanggal_list %}
                         <td class="col-tanggal">
+
+                            <!-- SHIFT PAGI -->
                             <select 
-                                class="form-control form-control-sm"
-                                name="shift_{{ user.nik }}_{{ tgl }}"
+                                class="form-control form-control-sm mb-1"
+                                name="shift_{{ user.nik }}_{{ tgl }}_1"
                             >
                                 <option value="">-</option>
                                 {% for schedule in schedules %}
                                     <option value="{{ schedule.id }}">{{ schedule.name }}</option>
                                 {% endfor %}
                             </select>
+
+                            <!-- SHIFT MALAM -->
+                            <select 
+                                class="form-control form-control-sm"
+                                name="shift_{{ user.nik }}_{{ tgl }}_2"
+                            >
+                                <option value="">-</option>
+                                {% for schedule in schedules %}
+                                    <option value="{{ schedule.id }}">{{ schedule.name }}</option>
+                                {% endfor %}
+                            </select>
+
                         </td>
                         {% endfor %}
                     </tr>

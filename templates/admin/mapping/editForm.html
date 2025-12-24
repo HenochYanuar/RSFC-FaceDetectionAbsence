@@ -80,31 +80,71 @@
 
                         {% for tgl in tanggal_list %}
                         <td class="col-tanggal">
-                            {% with selected_value=jadwal_lama|dict_get:user.nik|dict_get:tgl %}
-                            <select 
-                                class="form-control form-control-sm"
-                                name="shift_{{ user.nik }}_{{ tgl }}"
-                            >
-                                <option value="" disabled selected>-</option>
+
+                            {% with data_hari=jadwal_lama|dict_get:user.nik|dict_get:tgl %}
+
+                            <select class="form-control form-control-sm mb-1"
+                                    name="shift_{{ user.nik }}_{{ tgl }}_1">
+
+                                <option value="" disabled {% if not data_hari %}selected{% endif %}>
+                                    -
+                                </option>
 
                                 {% for schedule in schedules %}
-                                    {% if selected_value == "CUTI" %}
-                                        {% if schedule.id == "CUTI" %}
-                                            <option value="CUTI" selected>CUTI</option>
+
+                                    {% with selected_value=data_hari|dict_get:1 %}
+
+                                        {% if selected_value == "CUTI" %}
+                                            {% if schedule.id == "CUTI" %}
+                                                <option value="CUTI" selected>CUTI</option>
+                                            {% endif %}
+
+                                        {% else %}
+                                            {% if schedule.id != "CUTI" %}
+                                                <option value="{{ schedule.id }}"
+                                                    {% if selected_value == schedule.id %}selected{% endif %}
+                                                >
+                                                    {{ schedule.name }}
+                                                </option>
+                                            {% endif %}
                                         {% endif %}
 
-                                    {% else %}
-                                        {% if schedule.id != "CUTI" %}
-                                            <option value="{{ schedule.id }}"
-                                                {% if selected_value == schedule.id %}selected{% endif %}
-                                            >
-                                                {{ schedule.name }}
-                                            </option>
-                                        {% endif %}
-                                    {% endif %}
+                                    {% endwith %}
 
                                 {% endfor %}
                             </select>
+
+                            <select class="form-control form-control-sm"
+                                    name="shift_{{ user.nik }}_{{ tgl }}_2">
+
+                                <option value="" {% if not data_hari %}selected{% endif %}>
+                                    -
+                                </option>
+
+                                {% for schedule in schedules %}
+
+                                    {% with selected_value=data_hari|dict_get:2 %}
+
+                                        {% if selected_value == "CUTI" %}
+                                            {% if schedule.id == "CUTI" %}
+                                                <option value="CUTI" selected>CUTI</option>
+                                            {% endif %}
+
+                                        {% else %}
+                                            {% if schedule.id != "CUTI" %}
+                                                <option value="{{ schedule.id }}"
+                                                    {% if selected_value == schedule.id %}selected{% endif %}
+                                                >
+                                                    {{ schedule.name }}
+                                                </option>
+                                            {% endif %}
+                                        {% endif %}
+
+                                    {% endwith %}
+
+                                {% endfor %}
+                            </select>
+
                             {% endwith %}
                         </td>
                         {% endfor %}

@@ -85,16 +85,24 @@
                                             </thead>
                                             <tbody>
                                             
-                                            {% for nik, data_user in data_nik_bulan.items %}
-                                            <tr>
-                                                <td class="font-mono text-xs">{{ nik }}</td>
-                                                <td>{{ data_user.nama }}</td>
-                                                
-                                                {% for hari, kode_jadwal in data_user.days.items %}
-                                                    <td class="text-center font-bold 
-                                                        {% if kode_jadwal != '-' %}bg-info text-primary{% else %}text-gray-400{% endif %}">
+                                                {% for nik, data_user in data_nik_bulan.items %}
+                                                <tr>
+                                                    <td class="font-mono text-xs">{{ nik }}</td>
+                                                    <td>{{ data_user.nama }}</td>
+                                                    
+                                                    {% for hari, list_shift in data_user.days.items %}
+                                                    <td class="text-center 
+                                                        {% if list_shift %}bg-info text-primary{% else %}text-gray-400{% endif %}">
                                                         
-                                                        {{ kode_jadwal }}
+                                                        {% if list_shift %}
+                                                            {% for shift in list_shift %}
+                                                                <div class="badge badge-light d-block mb-1">
+                                                                    {{ shift }}
+                                                                </div>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
                                                     </td>
                                                     {% endfor %}
                                                 </tr>

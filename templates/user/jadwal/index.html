@@ -62,38 +62,51 @@
 
                     <thead>
                         <tr>
-                            <th style="width: 90px;">Tanggal</th>
-                            <th>Hari</th>
-                            <th>Jadwal</th>
+                            <th style="width: 90px;" class="col-1">Tanggal</th>
+                            <th class="col-6">Hari</th>
+                            <th class="col-5">Jadwal</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         {% for item in jadwal_bulanan %}
-                        <tr {% if item.jadwal == 'Libur' %} class='bg-secondary' {% elif item.jadwal == 'Cuti' %} class='bg-warning' {% endif %}>
+
+                        {% with first=item.jadwal.0 %}
+                        <tr
+                            {% if first == "Libur" %}
+                                class="bg-secondary"
+                            {% elif first == "Cuti" %}
+                                class="bg-warning"
+                            {% endif %}
+                        >
                             <td class="fw-bold">{{ item.tanggal }}</td>
                             <td>{{ item.hari|hari_id }}</td>
                             <td>
-                                {% if item.jadwal == "-" %}
-                                    <span class="badge bg-secondary" style="font-size: 16px;">{{ item.jadwal }}</span>
-                                
-                                {% elif item.jadwal == "Libur" %}
-                                    <span class="badge bg-secondary" style="font-size: 16px;">{{ item.jadwal }}</span>
+                                {% if first == "-" %}
+                                    <span class="badge bg-secondary" style="font-size:16px;">-</span>
 
-                                {% elif item.jadwal == "Cuti" %}
-                                    <span class="badge bg-warning text-dark" style="font-size: 16px;">{{ item.jadwal }}</span>
+                                {% elif first == "Libur" %}
+                                    <span class="badge bg-secondary" style="font-size:16px;">Libur</span>
+
+                                {% elif first == "Cuti" %}
+                                    <span clas-s="badge bg-warning text-dark" style="font-size:16px;">Cuti</span>
 
                                 {% else %}
-                                    <span class="badge bg-success" style="font-size: 16px;">{{ item.jadwal }}</span>
+                                    {% for jam in item.jadwal %}
+                                        <span class="badge bg-success" style="font-size:16px;">
+                                            {{ jam }}
+                                        </span>
+                                    {% endfor %}
                                 {% endif %}
                             </td>
                         </tr>
+                        {% endwith %}
+
                         {% endfor %}
                     </tbody>
 
                 </table>
             </div>
-
         </div>
 
     </div>
