@@ -42,5 +42,6 @@ class LeaveRequests(models.Model):
     end_date = models.DateField()
     reason = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, default='Pending')
+    user_target = models.ForeignKey('app.Users', related_name='approver', on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

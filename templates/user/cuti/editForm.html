@@ -33,14 +33,30 @@
             </select>
           </div>
         </div>
-        
         <div class="col-md-6">
+          <div class="form-group">
+            <label>Pilih Atasan</label>
+            <select class="form-control" name="boss" required>
+              <option value="" selected disabled>-- Pilih Atasan --</option>
+              {% for boss in boss_list %}
+              <option value="{{ boss.nik }}"
+                {% if boss.nik == pengajuan.user_target.nik %} 
+                      selected
+                  {% endif %}
+              >{{ boss.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        
+        {% comment %} <div class="col-md-6">
           <div class="form-group">
             <label>Foto Pendukung</label>
             <input type="file" class="form-control mb-2" id="photo" name="photo" accept="image/*"> 
             <a href="{{ pengajuan.photo.url }}" class="ml-2"><img src="{{ pengajuan.photo.url }}" style="width:150px" alt="Surat Pengajuan Cuti"></a>
           </div>
-        </div>
+        </div> {% endcomment %}
       </div>
       
       <div class="row">

@@ -176,7 +176,7 @@ def absence(request):
         best_distance = distances[best_idx]
         print(f'User encode: {best_distance}')
 
-        if best_distance > 0.55:
+        if best_distance > 0.4:
             return JsonResponse({
                 'status': 'error',
                 'message': 'Gagal mengenali wajah'
@@ -351,6 +351,9 @@ def pengajuan_cuti(request):
         start_date = request.POST['start_date']
         end_date = request.POST['end_date']
         reason = request.POST['reason']
+        boss = request.POST['boss']
+
+        boss_obj = get_object_or_404(Users, nik=boss)
 
         current_year = now().year
 
@@ -390,6 +393,7 @@ def pengajuan_cuti(request):
             start_date=start_date,
             end_date=end_date,
             reason=reason,
+            user_target=boss_obj
         )
 
         # if photo_file:
@@ -401,11 +405,13 @@ def pengajuan_cuti(request):
         return redirect('/users/pengajuan_cuti')
 
     cuti_list = MasterLeaves.objects.all()
+    boss_list = Users.objects.filter(is_admin__in=[1,2])
     pengajuan_list = LeaveRequests.objects.filter(nik_id=user.nik)
 
     context = {
         'user': user,
         'cuti_list': cuti_list,
+        'boss_list': boss_list,
         'pengajuan_list': pengajuan_list,
         'title': 'Pengajuan Cuti'
     }
@@ -431,6 +437,9 @@ def edit_pengajuan_cuti(request, id):
         start_date = request.POST['start_date']
         end_date = request.POST['end_date']
         reason = request.POST['reason']
+        boss = request.POST['boss']
+
+        boss_obj = get_object_or_404(Users, nik=boss)
 
         try:
             pengajuan = get_object_or_404(LeaveRequests, id=id)
@@ -439,6 +448,8 @@ def edit_pengajuan_cuti(request, id):
             pengajuan.start_date = start_date
             pengajuan.end_date = end_date
             pengajuan.reason = reason
+            pengajuan.user_target = boss_obj
+
 
             # if(photo_file):
             #    pengajuan.photo = photo_file
@@ -452,10 +463,13 @@ def edit_pengajuan_cuti(request, id):
             messages.error(request, f'Gagal mengupload perubahan data pengajuan cuti. Error: {e}')
             return redirect('/users/pengajuan_cuti')
 
+    boss_list = Users.objects.filter(is_admin__in=[1,2])
+
     context = {
        'user': user,
        'cuti_list':cuti_list,
        'pengajuan': pengajuan,
+       'boss_list': boss_list,
        'title': 'Edit Pengajuan Cuti'
     }
 

@@ -86,7 +86,7 @@
         <input type='text' name="nik_id" id="nik_id" value="{{ user.nik }}" hidden>
         <div class="modal-body">
           <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-6">
               <div class="form-group">
                 <label>Jenis Cuti</label>
                 <select class="form-control" name="cuti" required>
@@ -97,19 +97,33 @@
                 </select>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>Pilih Atasan</label>
+                <select class="form-control" name="boss" required>
+                  <option value="" selected disabled>-- Pilih Atasan --</option>
+                  {% for boss in boss_list %}
+                  <option value="{{ boss.nik }}">{{ boss.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
               <div class="form-group">
                 <label>Tanggal Mulai</label>
                 <input type="date" class="form-control" id="start_date" name="start_date" required>
               </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-6">
               <div class="form-group">
                 <label>Tanggal Selesai</label>
                 <input type="date" class="form-control" id="end_date" name="end_date" required>
               </div>
             </div>
+          </div>
             
             {% comment %} <div class="col-md-6">
               <div class="form-group">
@@ -117,7 +131,6 @@
                 <input type="file" class="form-control" id="photo" name="photo" accept="image/*"> 
               </div>
             </div> {% endcomment %}
-          </div>
           
           {% comment %} <div class="row">
             
