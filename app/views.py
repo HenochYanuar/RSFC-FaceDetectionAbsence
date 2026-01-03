@@ -150,12 +150,13 @@ def absence(request):
                 except Exception:
                     continue
 
-            cache.set("known_face_encodings", known_encodings, 3600)
-            cache.set("known_face_users", user_list, 3600)
+            cache.set("known_face_encodings", known_encodings, 86400)
+            cache.set("known_face_users", user_list, 86400)
 
             print("DB count:", db_count)
-            print("Cache count:", len(known_encodings))
+            print(f"Cache Re-loaded. Total: {len(known_encodings)}")
         else:
+            print("Menggunakan data dari cache.")
             known_encodings = cached_enc
             user_list = cached_users
 
