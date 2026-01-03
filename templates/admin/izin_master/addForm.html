@@ -1,0 +1,61 @@
+{% extends 'layouts/layout.html' %}
+{% block content %}
+<div class="card card-primary">
+    <div class="card-header">
+        <h3 class="card-title">{{ title }}</h3>
+    </div>
+    <!-- /.card-header -->
+    <!-- form start -->
+    <form role="form" method="post" action="{% url 'addIzin' %}">
+        {% csrf_token %}
+        <div class="card-body">
+            <div class="form-group">
+                <label for="izin_name">Nama Izin</label>
+                <input type="text" class="form-control" name="izin_name" id="izin_name" placeholder="Nama Cuti" required>
+            </div>
+            <div class="form-group">
+                <label for="jmlh_hari">Jumlah Hari/Izin</label>
+                <input type="number" class="form-control" name="jmlh_hari" id="jmlh_hari" placeholder="Jumlah Hari">
+            </div>
+            <div class="form-group">
+                <label for="bukti">Apakah Memerlukan Bukti</label>
+                {% comment %} use radio button {% endcomment %}
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="bukti" id="bukti_yes" value="True" required>
+                    <label class="form-check-label" for="bukti_yes">
+                        Ya (Memerlukan Bukti)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="bukti" id="bukti_no" value="False" required>
+                    <label class="form-check-label" for="bukti_no">
+                        Tidak (Tidak Memerlukan Bukti)
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="jatah">Jatah Pengajuan/Bulan</label>
+                <input type="number" class="form-control" name="jatah" id="jatah" placeholder="Jatah">
+            </div>
+        </div>
+        <div class="card-footer">
+            <button id="submit" type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{% if messages %}
+<script>
+    {% for message in messages %}
+    Swal.fire({
+        icon: "{{ message.tags }}",  
+        title: "{{ message.tags|capfirst }}",
+        text: "{{ message }}",
+        showConfirmButton: false,
+        timer: 3000
+    });
+    {% endfor %}
+</script>
+{% endif %}
+{% endblock %}

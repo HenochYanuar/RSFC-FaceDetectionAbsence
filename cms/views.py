@@ -1281,10 +1281,99 @@ def deleteKaryawan(request, nik):
       messages.error(request, f'Gagal menghapus data karyawan: {e}')
       return redirect('/admins/karyawan')
     
+@login_auth
+@admin_required
+@superadmin_required
+def izin_master(request):
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
 
+    izin_list = MasterPermission.objects.all()
 
+    context = {
+        'user': user,
+        'title': 'Izin Master',
+        'izin_list': izin_list,
+    }
 
+    return render(request, 'admin/izin_master/index.html', context)
 
+@login_auth
+@admin_required
+@superadmin_required
+def addIzin(request):
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
 
+    if request.method == 'POST':
+      name = request.POST['izin_name']
+      max_per_month = request.POST['jatah']
+      max_days = request.POST['jmlh_hari']
+      is_requires_attachment = request.POST['bukti']
 
+      izin = MasterPermission(
+        name=name,
+        max_per_month=max_per_month,
+        max_days=max_days,
+        is_requires_attachment=is_requires_attachment,  
+      )
+      izin.save()
+
+      messages.success(request, 'Data izin berhasil diupload.')
+      return redirect('/admins/izin')
     
+    context = {
+      'user': user,
+      'title': 'Tambah Izin',
+    }
+    return render(request, 'admin/izin_master/addForm.html', context)
+
+@login_auth
+@admin_required
+@superadmin_required
+def editIzin(request, id):
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
+
+    if request.method == 'POST':
+      name = request.POST['izin_name']
+      max_per_month = request.POST['jatah']
+      max_days = request.POST['jmlh_hari']
+      is_requires_attachment = request.POST['bukti']
+
+      try:
+        izin = get_object_or_404(MasterPermission, id=id)
+
+        izin.name = name
+        izin.max_per_month = max_per_month
+        izin.max_days = max_days
+        izin.is_requires_attachment = is_requires_attachment
+        izin.save()
+
+        messages.success(request, 'Data izin berhasil diupdate.')
+        return redirect('/admins/izin')
+      
+      except Exception as e:
+        messages.error(request, f'Gagal mengupdate data izin: {e}')
+        return redirect('/admins/izin')
+    
+    izin = get_object_or_404(MasterPermission, id=id)
+
+    context = {
+      'user': user,
+      'title': 'Edit Izin',
+      'izin': izin,
+    }
+    return render(request, 'admin/izin_master/editForm.html', context)
+ 
+@login_auth
+@admin_required
+@superadmin_required
+def deleteIzin(request, id):
+    try:
+      izin = get_object_or_404(MasterPermission, id=id)
+      izin.delete()
+
+      messages.success(request, 'Data izin berhasil dihapus.')
+      return redirect('/admins/izin')
+    
+    except Exception as e:
+      messages.error(request, f'Gagal menghapus data izin: {e}')
+      return redirect('/admins/izin')

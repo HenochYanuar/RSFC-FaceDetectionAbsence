@@ -45,3 +45,11 @@ class LeaveRequests(models.Model):
     user_target = models.ForeignKey('app.Users', related_name='approver', on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+class MasterPermission(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100)
+    max_days = models.IntegerField()
+    is_requires_attachment = models.BooleanField(default=False)
+    max_per_month = models.IntegerField(null=True, blank=True)
+

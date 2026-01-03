@@ -41,6 +41,11 @@ urlpatterns = [
     path('karyawan/edit/<str:nik>', editKaryawan, name='editKaryawan'),
     path('karyawan/delete/<str:nik>', deleteKaryawan, name='deleteKaryawan'),
 
+    path('izin/', izin_master, name='izin_master'),
+    path('izin/add/', addIzin, name='addIzin'),
+    path('izin/edit/<str:id>', editIzin, name='editIzin'),
+    path('izin/delete/<str:id>', deleteIzin, name='deleteIzin'),
+
     path('err403/', err403, name='err403'),
     path('err404/', err404, name='err404')
 ]
