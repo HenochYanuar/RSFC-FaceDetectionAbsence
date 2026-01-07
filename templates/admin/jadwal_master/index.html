@@ -26,7 +26,7 @@
                 <td class="col-3 text-left">{{ jadwal.name }}</td>
                 <td class="col-2">{{ jadwal.start_time|time:"H:i:s" }}</td>
                 <td class="col-2">{{ jadwal.end_time|time:"H:i:s" }}</td>
-                {% if jadwal.id == 'CUTI' or jadwal.id == 'LIBUR' %}
+                {% if jadwal.id == 'CUTI' or jadwal.id == 'LIBUR' or jadwal.id == 'IZIN' %}
                 <td class="col-2"><span class="badge badge-danger">No Action</span></td>
                 {% else %}
                 <td class="col-2">

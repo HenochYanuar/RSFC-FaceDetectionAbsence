@@ -325,6 +325,10 @@ def editJadwal(request, id):
       try:
         jadwal = get_object_or_404(MasterSchedules, id=jadwal_id)
 
+        if id == 'CUTI' or id == 'LIBUR' or id == 'IZIN':
+          messages.error(request, 'Jadwal ini tidak dapat dihapus.')
+          return redirect('/admins/jadwal')
+
         jadwal.name = jadwal_name
         jadwal.start_time = start_time
         jadwal.end_time = end_time
@@ -353,7 +357,7 @@ def deleteJadwal(request, id):
     try:
       jadwal = get_object_or_404(MasterSchedules, id=id)
 
-      if id == 'CUTI' or id == 'LIBUR':
+      if id == 'CUTI' or id == 'LIBUR' or id == 'IZIN':
           messages.error(request, 'Jadwal ini tidak dapat dihapus.')
           return redirect('/admins/jadwal')
       
