@@ -256,7 +256,8 @@ def absence(request):
         first_schedule_name = jadwal_list[0].schedule.name
         msg_map = {
             "Libur": f'{user.name}, hari ini anda libur. Tidak perlu absen ya!',
-            "Cuti": f'{user.name}, hari ini anda cuti. Tidak perlu absen ya!'
+            "Cuti": f'{user.name}, hari ini anda cuti. Tidak perlu absen ya!',
+            "Izin": f'{user.name}, hari ini anda izin. Tidak perlu absen ya!'
         }
 
         if first_schedule_name in msg_map:
