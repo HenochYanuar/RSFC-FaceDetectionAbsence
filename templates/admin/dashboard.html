@@ -141,8 +141,8 @@
                             <tr>
                                 <th>NIK</th>
                                 <th>Nama</th>
-                                <th>Jam Masuk</th>
-                                <th>Jam Pulang</th>
+                                <th>Jam Masuk (Jadwal)</th>
+                                <th>Jam Datang (Absen)</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -152,19 +152,19 @@
                                 <td>{{ row.nik.nik }}</td>
                                 <td>{{ row.nik.name }}</td>
 
-                                <td>
+                                <td class="text-center">
                                     {% if row.status_masuk in "Cuti Libur" %}
                                         -
                                     {% else %}
-                                        {{ row.schedule.start_time|default:"-" }}
+                                        {{ row.schedule.start_time|date:"H:i"|default:"-" }}
                                     {% endif %}
                                 </td>
 
-                                <td>
-                                    {% if row.status_masuk in "Cuti Libur" %}
-                                        -
+                                <td class="text-center">
+                                    {% if row.jam_masuk %}
+                                        {{ row.jam_masuk|date:"H:i" }}
                                     {% else %}
-                                        {{ row.schedule.end_time|default:"-" }}
+                                        -
                                     {% endif %}
                                 </td>
 

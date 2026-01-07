@@ -80,8 +80,6 @@ def dashboard(request):
         datetime.combine(today, time.max)
     )
 
-    print( start, end)
-
     total_karyawan = Users.objects.count()
 
     total_jadwal = MappingSchedules.objects.filter(date=today).count()
@@ -124,23 +122,33 @@ def dashboard(request):
 
     data_7_hari.reverse()
 
-    from django.db.models import OuterRef, Subquery
+    from django.db.models import OuterRef, Subquery, DateTimeField
 
     # Tabel presensi hari ini
-    absence_subquery = (
+    absence_qs = (
         InAbsences.objects
         .filter(
             nik=OuterRef("nik"),
             schedule=OuterRef("schedule"),
             date_in__range=(start, end)
         )
-        .values("status_in")[:1]
+        .order_by("date_in")
     )
+
+    status_subquery = absence_qs.values("status_in")[:1]
+
+    jam_masuk_subquery = absence_qs.values("date_in")[:1]
 
     presensi_hari_ini = (
         MappingSchedules.objects
         .select_related("nik", "schedule")
-        .annotate(status_masuk=Subquery(absence_subquery))
+        .annotate(
+            status_masuk=Subquery(status_subquery),
+            jam_masuk=Subquery(
+                jam_masuk_subquery,
+                output_field=DateTimeField()
+            )
+        )
         .filter(date=today)
         .order_by("nik__name")
     )
