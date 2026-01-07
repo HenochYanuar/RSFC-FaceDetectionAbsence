@@ -393,7 +393,7 @@ def pengajuan_cuti(request):
         return redirect('/users/pengajuan_cuti')
 
     cuti_list = MasterLeaves.objects.all()
-    boss_list = Users.objects.filter(is_admin__in=[1,2])
+    boss_list = Users.objects.filter(is_admin__in=[1,2]).exclude(nik=user.nik)
     pengajuan_list = LeaveRequests.objects.filter(nik_id=user.nik)
 
     context = {
@@ -451,7 +451,7 @@ def edit_pengajuan_cuti(request, id):
             messages.error(request, f'Gagal mengupload perubahan data pengajuan cuti. Error: {e}')
             return redirect('/users/pengajuan_cuti')
 
-    boss_list = Users.objects.filter(is_admin__in=[1,2])
+    boss_list = Users.objects.filter(is_admin__in=[1,2]).exclude(nik=user.nik)
 
     context = {
        'user': user,
@@ -722,7 +722,7 @@ def pengajuan_izin(request):
     context = {
         'user': user,
         'izin_list': MasterPermission.objects.all(),
-        'boss_list': Users.objects.filter(is_admin__in=[1, 2]),
+        'boss_list': Users.objects.filter(is_admin__in=[1, 2]).exclude(nik=user.nik),
         'pengajuan_list': PermissionRequests.objects.filter(nik=user).order_by('-created_at'),
         'title': 'Pengajuan Izin'
     }
@@ -796,7 +796,7 @@ def edit_pengajuan_izin(request, id):
     context = {
         'user': user,
         'izin_list': MasterPermission.objects.all(),
-        'boss_list': Users.objects.filter(is_admin__in=[1, 2]),
+        'boss_list': Users.objects.filter(is_admin__in=[1, 2]).exclude(nik=user.nik),
         'pengajuan': pengajuan,
         'title': 'Edit Pengajuan Izin'
     }
