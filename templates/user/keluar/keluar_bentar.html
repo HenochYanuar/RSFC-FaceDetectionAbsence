@@ -1,0 +1,147 @@
+{% extends 'layouts/layout.html' %}
+{% block content %}
+
+<div class="container-fluid">
+
+  {% if active_out %}
+    <!-- =======================
+         MODE RETURN
+    ======================== -->
+    <div class="card card-danger">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-clock mr-1"></i>
+          Sedang Izin Keluar
+        </h3>
+      </div>
+      <div class="card-body text-center">
+
+        <div class="text-center p-3">
+          <h5><i class="fas fa-clock"></i> Waktu Sekarang</h5>
+          <p id="datetime" class="mb-0 font-weight-bold"></p>
+        </div>
+
+        <div class="alert alert-danger">
+          Keluar sejak:
+          <strong>{{ active_out.time_out }}</strong>
+        </div>
+
+        <form method="post" action="{% url 'balik_keluar_bentar' %}">
+          {% csrf_token %}
+          <button class="btn btn-success btn-lg">
+            <i class="fas fa-sign-in-alt mr-1"></i>
+            Kembali Bekerja
+          </button>
+        </form>
+
+      </div>
+    </div>
+
+  {% else %}
+    <!-- =======================
+         MODE OUT
+    ======================== -->
+    <div class="card card-warning">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-person-walking-arrow-right mr-1"></i>
+          Izin Keluar Sementara
+        </h3>
+      </div>
+
+      <form method="post" action="{% url 'keluar_bentar' %}">
+        {% csrf_token %}
+        <div class="card-body">
+
+          <div class="text-center p-3">
+            <h5><i class="fas fa-clock"></i> Waktu Sekarang</h5>
+            <p id="datetime" class="mb-0 font-weight-bold"></p>
+          </div>
+
+          <div class="form-group">
+            <label>Alasan</label>
+            <textarea name="reason" class="form-control" required></textarea>
+          </div>
+
+        </div>
+
+        <div class="card-footer text-center">
+          <button class="btn btn-warning btn-lg">
+            <i class="fas fa-sign-out-alt"></i>
+            Izin Keluar
+          </button>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+
+  <!-- =======================
+       RIWAYAT
+  ======================== -->
+  <div class="card mt-4">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fas fa-list mr-1"></i>
+        Riwayat Izin Keluar Hari Ini
+      </h3>
+    </div>
+
+    <div class="card-body p-0">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th class="text-center col-3">Keluar</th>
+            <th class="text-center col-3">Kembali</th>
+            <th class="text-center col-3">Alasan</th>
+            <th class="text-center col-1">Durasi</th>
+            <th class="text-center col-2">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in today_permissions %}
+          <tr>
+            <td class="text-center">{{ item.time_out|date:"j F Y, H:i" }}</td>
+            <td class="text-center">{{ item.time_in|date:"j F Y, H:i"|default:"-" }}</td>
+            <td class="text-left">{{ item.reason }}
+            <td class="text-center">{{ item.duration_minutes|default:"-" }} menit</td>
+            <td class="text-center"><span class="{% if item.status == 'Kembali' %} badge bg-success {% elif item.status == 'Keluar' %} badge bg-warning {% else %} badge bg-danger {% endif %}">{{ item.status }}</span></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="text-center text-muted">
+              Belum ada izin keluar hari ini
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function updateDateTime() {
+    const now = new Date();
+
+    const date = now.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+
+    const time = now.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+
+    document.getElementById('datetime').innerText =
+        `${date}, ${time} WIB`;
+}
+
+updateDateTime();
+setInterval(updateDateTime, 1000);
+</script>
+
+{% endblock %}

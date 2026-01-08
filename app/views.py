@@ -818,3 +818,87 @@ def delete_pengajuan_izin(request, id):
     except Exception as e:
         messages.error(request, f'Gagal menghapus data pengajuan izin: {e}')
         return redirect('/users/pengajuan_izin')
+
+
+@login_auth
+def keluar_bentar(request):
+    user = get_object_or_404(Users, nik=request.session.get('nik_id'))
+
+    from django.utils import timezone
+    today = timezone.localdate()
+
+    active_out = OutPermission.objects.filter(
+        nik=user.nik,
+        date=today,
+        status='Keluar'
+    ).first()
+
+    if request.method == 'POST':
+
+        if active_out:
+            messages.error(request, 'Anda masih dalam status izin keluar.')
+            return redirect('keluar_bentar')
+
+        reason = request.POST.get('reason')
+        if not reason:
+            messages.error(request, 'Alasan wajib diisi.')
+            return redirect('keluar_bentar')
+
+        OutPermission.objects.create(
+            nik=user,
+            date=today,
+            time_out=timezone.now(),
+            reason=reason,
+            status='Keluar'
+        )
+
+        messages.success(request, 'Izin keluar berhasil dicatat.')
+        return redirect('keluar_bentar')
+
+    start_date = today - timedelta(days=30)
+
+    today_permissions = OutPermission.objects.filter(
+        nik=user,
+        date__range=(start_date, today)
+    ).order_by('-date', '-time_out')
+
+    context = {
+        'user': user,
+        'active_out': active_out,
+        'today_permissions': today_permissions,
+        'today': today
+    }
+
+    return render(request, 'user/keluar/keluar_bentar.html', context)
+
+@login_auth
+def balik_keluar_bentar(request):
+    user = get_object_or_404(Users, nik=request.session.get('nik_id'))
+
+    from django.utils import timezone
+    today = timezone.localdate()
+
+    active_out = OutPermission.objects.filter(
+        nik=user,
+        date=today,
+        status='Keluar'
+    ).first()
+
+    if not active_out:
+        messages.error(request, 'Tidak ada izin keluar yang aktif.')
+        return redirect('keluar_bentar')
+
+    time_in = timezone.now()
+    duration = int((time_in - active_out.time_out).total_seconds() / 60)
+
+    active_out.time_in = time_in
+    active_out.duration_minutes = duration
+    active_out.status = 'Kembali'
+    active_out.save()
+
+    messages.success(
+        request,
+        f'Kembali bekerja berhasil. Durasi izin: {duration} menit.'
+    )
+
+    return redirect('keluar_bentar')

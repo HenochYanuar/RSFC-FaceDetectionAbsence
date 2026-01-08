@@ -67,3 +67,27 @@ class PermissionRequests(models.Model):
         if self.photo:
             self.photo = compress_image(self.photo)
         super().save(*args, **kwargs)
+
+class OutPermission(models.Model):
+    nik = models.ForeignKey('app.Users', on_delete=models.CASCADE)
+
+    date = models.DateField()
+    time_out = models.DateTimeField()
+    time_in = models.DateTimeField(null=True, blank=True)
+
+    duration_minutes = models.IntegerField(null=True, blank=True)
+
+    reason = models.TextField()
+
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('OUT', 'Sedang Keluar'),
+            ('RETURN', 'Sudah Kembali'),
+            ('CANCEL', 'Dibatalkan'),
+        ],
+        default='OUT'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
