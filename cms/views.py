@@ -1544,3 +1544,105 @@ def detail_pengajuan_izin(request, id):
     }
 
     return render(request, 'admin/izin_persetujuan/detail.html', context)
+
+@login_auth
+@admin_required
+@superadmin_required
+def riwayat_keluar (request):
+    from datetime import datetime, timedelta
+    user = get_object_or_404(Users, nik=request.session.get('nik_id'))
+
+    # OPTIONAL: proteksi role
+    # if user.is_admin not in [1, 2]:
+    #     return HttpResponseForbidden()
+
+    # ======================================================
+    # FILTER INPUT
+    # ======================================================
+    divisi = request.GET.get('divisi')
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+
+    # ======================================================
+    # BASE QUERY
+    # ======================================================
+    qs = (
+        OutPermission.objects
+        .select_related('nik')
+        .order_by('-time_out')
+    )
+
+    # ======================================================
+    # FILTER DIVISI
+    # ======================================================
+    if divisi:
+        qs = qs.filter(nik__divisi=divisi)
+
+    # ======================================================
+    # SEDANG KELUAR (STATUS OUT)
+    # ======================================================
+    out_active = qs.filter(status='Keluar')
+
+    # ======================================================
+    # RIWAYAT
+    # DEFAULT: 31 HARI TERAKHIR
+    # ======================================================
+    out_history = qs
+
+    if start and end:
+        start_dt = timezone.make_aware(
+            datetime.strptime(start, "%Y-%m-%d")
+        )
+        end_dt = timezone.make_aware(
+            datetime.strptime(end, "%Y-%m-%d")
+        ).replace(hour=23, minute=59, second=59)
+
+        out_history = out_history.filter(
+            time_out__range=(start_dt, end_dt)
+        )
+    else:
+        out_history = out_history.filter(
+            time_out__gte=timezone.now() - timedelta(days=31)
+        )
+
+    # ======================================================
+    # HITUNG DURASI (BACKEND)
+    # ======================================================
+    for o in out_history:
+        if o.time_out and o.time_in:
+            delta = o.time_in - o.time_out
+            o.duration_minutes = int(delta.total_seconds() // 60)
+        elif o.status == 'Keluar':
+            delta = timezone.now() - o.time_out
+            o.duration_minutes = int(delta.total_seconds() // 60)
+        else:
+            o.duration_minutes = None
+
+    # ======================================================
+    # LIST DIVISI (UNTUK DROPDOWN FILTER)
+    # ======================================================
+    divisi_list = (
+        Users.objects
+        .exclude(divisi__isnull=True)
+        .exclude(divisi__exact='')
+        .values_list('divisi', flat=True)
+        .distinct()
+        .order_by('divisi')
+    )
+
+    # ======================================================
+    # RENDER
+    # ======================================================
+    return render(request, 'admin/keluar/index.html', {
+        'user': user,
+        'title': 'Rekap Izin Keluar (Out Permission)',
+
+        'divisi_list': divisi_list,
+
+        'out_active': out_active,
+        'out_history': out_history,
+
+        'selected_divisi': divisi,
+        'start_date': start,
+        'end_date': end,
+    })

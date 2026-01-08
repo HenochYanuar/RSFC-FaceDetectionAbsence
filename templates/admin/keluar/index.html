@@ -1,0 +1,141 @@
+{% extends 'layouts/layout.html' %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Filter Data</h3>
+  </div>
+  <div class="card-body">
+    <form method="GET" class="form-inline">
+      <select name="divisi" class="form-control mr-2">
+        <option value="">Semua Divisi</option>
+        {% for d in divisi_list %}
+          <option value="{{ d }}">{{ d }}</option>
+        {% endfor %}
+      </select>
+
+      <input type="date" name="start" class="form-control mr-2">
+      <input type="date" name="end" class="form-control mr-2">
+
+      <button class="btn btn-primary">
+        <i class="fas fa-filter"></i> Filter
+      </button>
+    </form>
+  </div>
+</div>
+
+
+<div class="card card-danger">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fas fa-door-open"></i> Sedang Keluar
+    </h3>
+  </div>
+
+  <div class="card-body table-responsive p-0">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>NIK</th>
+          <th>Nama</th>
+          <th>Divisi</th>
+          <th>Keluar</th>
+          <th>Durasi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in out_active %}
+        <tr>
+          <td>{{ o.nik.nik }}</td>
+          <td>{{ o.nik.name }}</td>
+          <td>{{ o.nik.divisi }}</td>
+          <td>{{ o.time_out|date:"j F Y H:i" }}</td>
+          <td>
+            <span class="badge badge-danger timer"
+              data-time="{{ o.time_out|date:'c' }}">
+            </span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-muted">
+            Tidak ada karyawan keluar
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">
+      Riwayat
+    </h3>
+  </div>
+
+  <div class="card-body table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th class='text-center'>Tanggal</th>
+          <th class='text-center'>NIK</th>
+          <th class='text-center'>Nama</th>
+          <th class='text-center'>Keluar</th>
+          <th class='text-center'>Kembali</th>
+          <th class='text-center'>Durasi</th>
+          <th class='text-center'>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in out_history %}
+        <tr>
+          <td>{{ o.date|date:"j F Y" }}</td>
+          <td>{{ o.nik.nik }}</td>
+          <td>{{ o.nik.name }}</td>
+          <td class='text-center'>{{ o.time_out|date:"H:i" }}</td>
+          <td class='text-center'>{{ o.time_in|default:"-"|date:"H:i" }}</td>
+          <td class='text-center'>
+            {% if o.duration_minutes %}
+              {{ o.duration_minutes }} menit
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td class='text-center'>
+            <span class="badge badge-{% if o.status == 'Keluar' %}warning{% elif o.status == 'Kembali' %}success{% else %}danger{% endif %}">
+              {{ o.get_status_display }}
+            </span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted">
+            Tidak ada izin keluar pada rentang waktu tersebut
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function updateTimers() {
+  document.querySelectorAll('.timer').forEach(el => {
+    const start = new Date(el.dataset.time);
+    const now = new Date();
+    const diff = Math.floor((now - start) / 60000);
+
+    const h = Math.floor(diff / 60);
+    const m = diff % 60;
+
+    el.innerText = `${h}j ${m}m`;
+  });
+}
+updateTimers();
+setInterval(updateTimers, 60000);
+</script>
+
+{% endblock %}
