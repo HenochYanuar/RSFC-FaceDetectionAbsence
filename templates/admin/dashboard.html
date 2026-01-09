@@ -19,6 +19,12 @@
     background: #f4f6f9; /* warna default AdminLTE */
     box-shadow: 0 2px 2px rgba(0,0,0,.05);
 }
+
+a .card:hover {
+    transform: scale(1.03);
+    transition: 0.2s;
+    cursor: pointer;
+}
 </style>
 
 <!-- Chart.js -->
@@ -60,66 +66,80 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card shadow-sm border-0 bg-primary">
-            <div class="card-body ">
-                <h6 class="text-white">Hadir </h6>
-                <h3 class="text-white">{{ hadir_hari_ini }}</h3>
+        <a href="?status=Hadir" class="text-decoration-none">
+            <div class="card shadow-sm border-0 bg-primary">
+                <div class="card-body ">
+                    <h6 class="text-white">Hadir </h6>
+                    <h3 class="text-white">{{ hadir_hari_ini }}</h3>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="card shadow-sm border-0 bg-dark">
-            <div class="card-body">
-                <h6 class="text-white">Belum Hadir</h6>
-                <h3 class="text-white">{{ belum_hadir }}</h3>
+        <a href="?status=Belum Hadir" class="text-decoration-none">
+            <div class="card shadow-sm border-0 bg-dark">
+                <div class="card-body">
+                    <h6 class="text-white">Belum Hadir</h6>
+                    <h3 class="text-white">{{ belum_hadir }}</h3>
+                </div>
             </div>
-        </div>
+        </a> 
     </div>
 
     <div class="col-md-3">
-        <div class="card shadow-sm border-0 bg-success">
-            <div class="card-body">
-                <h6 class="text-white">Tepat Waktu</h6>
-                <h3 class="text-white">{{ tepat_waktu_hari_ini }}</h3>
+        <a href="?status=Tepat Waktu" class="text-decoration-none">
+            <div class="card shadow-sm border-0 bg-success">
+                <div class="card-body">
+                    <h6 class="text-white">Tepat Waktu</h6>
+                    <h3 class="text-white">{{ tepat_waktu_hari_ini }}</h3>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-3">
-        <div class="card shadow-sm border-0 bg-danger">
-            <div class="card-body">
-                <h6 class="text-white">Terlambat</h6>
-                <h3 class="text-white">{{ terlamabt_hari_ini }}</h3>
+        <a href="?status=Terlambat" class="text-decoration-none">
+            <div class="card shadow-sm border-0 bg-danger">
+                <div class="card-body">
+                    <h6 class="text-white">Terlambat</h6>
+                    <h3 class="text-white">{{ terlamabt_hari_ini }}</h3>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-4">
-        <div class="card shadow-sm border-0 bg-warning">
-            <div class="card-body">
-                <h6 class="text-white">Cuti</h6>
-                <h3 class="text-white">{{ cuti_hari_ini }}</h3>
+        <a href="?status=cuti" class="text-decoration-none">
+            <div class="card shadow-sm border-0 bg-warning">
+                <div class="card-body">
+                    <h6 class="text-white">Cuti</h6>
+                    <h3 class="text-white">{{ cuti_hari_ini }}</h3>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-4">
-        <div class="card shadow-sm border-0 bg-secondary">
-            <div class="card-body">
-                <h6 class="text-white">Libur</h6>
-                <h3 class="text-white">{{ libur_hari_ini }}</h3>
+        <a href="?status=Libur" class="text-decoration-none">
+            <div class="card shadow-sm border-0 bg-secondary">
+                <div class="card-body">
+                    <h6 class="text-white">Libur</h6>
+                    <h3 class="text-white">{{ libur_hari_ini }}</h3>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-md-4">
-        <div class="card shadow-sm border-0 bg-info">
-            <div class="card-body">
-                <h6 class="text-white">Izin</h6>
-                <h3 class="text-white">{{ izin_hari_ini }}</h3>
+        <a href="?status=Izin" class="text-decoration-none">
+            <div class="card shadow-sm border-0 bg-info">
+                <div class="card-body">
+                    <h6 class="text-white">Izin</h6>
+                    <h3 class="text-white">{{ izin_hari_ini }}</h3>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
 
 </div>

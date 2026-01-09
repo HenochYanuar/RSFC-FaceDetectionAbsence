@@ -80,6 +80,8 @@ def dashboard(request):
         datetime.combine(today, time.max)
     )
 
+    filter_status = request.GET.get("status")
+
     total_karyawan = Users.objects.count()
 
     total_jadwal = MappingSchedules.objects.filter(date=today).count()
@@ -155,8 +157,15 @@ def dashboard(request):
             )
         )
         .filter(date=today)
-        .order_by("nik__name")
     )
+
+    if filter_status:
+        if filter_status == "Belum Hadir":
+            presensi_hari_ini = presensi_hari_ini.filter(status_masuk__isnull=True)
+        else:
+            presensi_hari_ini = presensi_hari_ini.filter(status_masuk=filter_status)
+
+    presensi_hari_ini = presensi_hari_ini.order_by("nik__name")
 
     context = {
         'user': user,
@@ -173,6 +182,7 @@ def dashboard(request):
         "labels_7_hari": labels_7_hari,
         "data_7_hari": data_7_hari,
         "presensi_hari_ini": presensi_hari_ini,
+        "filter_status": filter_status
     }
 
     return render(request, "admin/dashboard.html", context)
