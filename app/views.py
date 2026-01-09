@@ -130,35 +130,58 @@ def absence(request):
         # ======================================================
         # 5. LOAD CACHE ENCODING USER
         # ======================================================
-        db_count = Users.objects.exclude(face_encoding=None).count()
+        # db_count = Users.objects.exclude(face_encoding=None).count()
 
-        cached_enc = cache.get("known_face_encodings")
-        cached_users = cache.get("known_face_users")
+        # cached_enc = cache.get("known_face_encodings")
+        # cached_users = cache.get("known_face_users")
 
-        if not cached_enc or len(cached_enc) != db_count:
-            users = Users.objects.exclude(face_encoding=None).only(
-                "nik", "name", "face_encoding"
-            )
+        # if not cached_enc or len(cached_enc) != db_count:
+        #     users = Users.objects.exclude(face_encoding=None).only(
+        #         "nik", "name", "face_encoding"
+        #     )
 
-            known_encodings = []
-            user_list = []
+        #     known_encodings = []
+        #     user_list = []
 
-            for u in users:
-                try:
-                    known_encodings.append(pickle.loads(u.face_encoding))
-                    user_list.append(u)
-                except Exception:
-                    continue
+        #     for u in users:
+        #         try:
+        #             known_encodings.append(pickle.loads(u.face_encoding))
+        #             user_list.append(u)
+        #         except Exception:
+        #             continue
 
-            cache.set("known_face_encodings", known_encodings, 86400)
-            cache.set("known_face_users", user_list, 86400)
+        #     cache.set("known_face_encodings", known_encodings, 86400)
+        #     cache.set("known_face_users", user_list, 86400)
 
-            print("DB count:", db_count)
-            print(f"Cache Re-loaded. Total: {len(known_encodings)}")
-        else:
-            print("Menggunakan data dari cache.")
-            known_encodings = cached_enc
-            user_list = cached_users
+        #     print("DB count:", db_count)
+        #     print(f"Cache Re-loaded. Total: {len(known_encodings)}")
+        # else:
+        #     print("Menggunakan data dari cache.")
+        #     known_encodings = cached_enc
+        #     user_list = cached_users
+
+        # if not known_encodings:
+        #     return JsonResponse({
+        #         'status': 'error',
+        #         'message': 'Tidak ada data wajah terdaftar'
+        #     })
+
+        # ======================================================
+        # 5. LOAD ENCODING USER (TANPA CACHE)
+        # ======================================================
+        users = Users.objects.exclude(face_encoding=None).only(
+            "nik", "name", "face_encoding"
+        )
+
+        known_encodings = []
+        user_list = []
+
+        for u in users:
+            try:
+                known_encodings.append(pickle.loads(u.face_encoding))
+                user_list.append(u)
+            except Exception:
+                continue
 
         if not known_encodings:
             return JsonResponse({

@@ -162,6 +162,10 @@ def dashboard(request):
     if filter_status:
         if filter_status == "Belum Hadir":
             presensi_hari_ini = presensi_hari_ini.filter(status_masuk__isnull=True)
+        elif filter_status == "Hadir":
+            presensi_hari_ini = presensi_hari_ini.filter(status_masuk__isnull=False)
+        elif filter_status == "Semua":
+            presensi_hari_ini = presensi_hari_ini.all()
         else:
             presensi_hari_ini = presensi_hari_ini.filter(status_masuk=filter_status)
 
