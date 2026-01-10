@@ -75,6 +75,38 @@ function drawLandmarks(landmarks, connections, boundingBox) {
   }
 }
 
+function sendConfirmation(action) {
+  $.post({
+    url: CONFIRM_URL,
+    data: {
+      action: action,
+      csrfmiddlewaretoken: CSRF_TOKEN
+    },
+    success: function(res) {
+      if (res.status === "success") {
+        Swal.fire({
+          title: "Berhasil",
+          html: `
+            <p class="mb-1"><strong>${res.minor_message}</strong></p>
+          `,
+          imageUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjY1NGVnaGg4bzNiemdmNGRyYXo1cWE1dWZxaG5heGR5bWJtOTg3ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/esVaNp1XK3h5vVwa1x/giphy.gif',
+          imageWidth: 150,
+          imageHeight: 150,
+          showConfirmButton: true,
+          confirmButtonText: 'OK',
+          timer: 10000,
+          timerProgressBar: true
+        }).then(() => location.reload());
+      } else {
+        toastr.warning("Silakan ulangi absensi");
+        startCameraAndFaceMesh(); // kamera aktif lagi
+        mpCamera.start();
+      }
+    }
+  });
+}
+
+
 function autoCaptureAndSend() {
   const now = Date.now();
   if (now - lastCaptureAt < CAPTURE_COOLDOWN_MS) return;
@@ -104,6 +136,7 @@ function autoCaptureAndSend() {
       if (response.status === 'success') {
         let content = `
           <div class="mt-3">
+            <p style="background-color: #FFC107; padding:8px; border-radius: 8px; font-weight: bold">${response.message}</p>
             <p class="mb-1">
               <strong style="color: ${
                 (response.status_absen === 'Terlambat' || response.status_absen === 'Pulang Cepat') ? '#C82333' :
@@ -118,22 +151,22 @@ function autoCaptureAndSend() {
                 <tr><td><strong>Tanggal</strong></td><td>: ${response.date}</td></tr>
               </tbody>
             </table>
-            <p class="mb-1"><strong>${response.minor_message}</strong></p>
-          </div>
-        `;
+            </div>
+            `;
         mpCamera.stop();
         Swal.fire({
-          imageUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjY1NGVnaGg4bzNiemdmNGRyYXo1cWE1dWZxaG5heGR5bWJtOTg3ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/esVaNp1XK3h5vVwa1x/giphy.gif',
-          imageWidth: 150,
-          imageHeight: 150,
-          title: response.message,
+          icon: "question",
+          title: "Konfirmasi Wajah",
           html: content,
-          showConfirmButton: true,
-          confirmButtonText: 'OK',
-          timer: 10000,
-          timerProgressBar: true
+          showCancelButton: true,
+          confirmButtonText: "✅ Sesuai",
+          cancelButtonText: "❌ Tidak Sesuai",
         }).then((result) => {
-          location.reload();
+          if (result.isConfirmed) {
+            sendConfirmation("yes");
+          } else {
+            sendConfirmation("no");
+          }
         });
       } else {
         toastr.error(response.message);

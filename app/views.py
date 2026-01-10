@@ -130,64 +130,64 @@ def absence(request):
         # ======================================================
         # 5. LOAD CACHE ENCODING USER
         # ======================================================
-        # db_count = Users.objects.exclude(face_encoding=None).count()
+        db_count = Users.objects.exclude(face_encoding=None).count()
 
-        # cached_enc = cache.get("known_face_encodings")
-        # cached_users = cache.get("known_face_users")
+        cached_enc = cache.get("known_face_encodings")
+        cached_users = cache.get("known_face_users")
 
-        # if not cached_enc or len(cached_enc) != db_count:
-        #     users = Users.objects.exclude(face_encoding=None).only(
-        #         "nik", "name", "face_encoding"
-        #     )
+        if not cached_enc or len(cached_enc) != db_count:
+            users = Users.objects.exclude(face_encoding=None).only(
+                "nik", "name", "face_encoding"
+            )
 
-        #     known_encodings = []
-        #     user_list = []
+            known_encodings = []
+            user_list = []
 
-        #     for u in users:
-        #         try:
-        #             known_encodings.append(pickle.loads(u.face_encoding))
-        #             user_list.append(u)
-        #         except Exception:
-        #             continue
+            for u in users:
+                try:
+                    known_encodings.append(pickle.loads(u.face_encoding))
+                    user_list.append(u)
+                except Exception:
+                    continue
 
-        #     cache.set("known_face_encodings", known_encodings, 86400)
-        #     cache.set("known_face_users", user_list, 86400)
+            cache.set("known_face_encodings", known_encodings, 86400)
+            cache.set("known_face_users", user_list, 86400)
 
-        #     print("DB count:", db_count)
-        #     print(f"Cache Re-loaded. Total: {len(known_encodings)}")
-        # else:
-        #     print("Menggunakan data dari cache.")
-        #     known_encodings = cached_enc
-        #     user_list = cached_users
-
-        # if not known_encodings:
-        #     return JsonResponse({
-        #         'status': 'error',
-        #         'message': 'Tidak ada data wajah terdaftar'
-        #     })
-
-        # ======================================================
-        # 5. LOAD ENCODING USER (TANPA CACHE)
-        # ======================================================
-        users = Users.objects.exclude(face_encoding=None).only(
-            "nik", "name", "face_encoding"
-        )
-
-        known_encodings = []
-        user_list = []
-
-        for u in users:
-            try:
-                known_encodings.append(pickle.loads(u.face_encoding))
-                user_list.append(u)
-            except Exception:
-                continue
+            print("DB count:", db_count)
+            print(f"Cache Re-loaded. Total: {len(known_encodings)}")
+        else:
+            print("Menggunakan data dari cache.")
+            known_encodings = cached_enc
+            user_list = cached_users
 
         if not known_encodings:
             return JsonResponse({
                 'status': 'error',
                 'message': 'Tidak ada data wajah terdaftar'
             })
+
+        # ======================================================
+        # 5. LOAD ENCODING USER (TANPA CACHE)
+        # ======================================================
+        # users = Users.objects.exclude(face_encoding=None).only(
+        #     "nik", "name", "face_encoding"
+        # )
+
+        # known_encodings = []
+        # user_list = []
+
+        # for u in users:
+        #     try:
+        #         known_encodings.append(pickle.loads(u.face_encoding))
+        #         user_list.append(u)
+        #     except Exception:
+        #         continue
+
+        # if not known_encodings:
+        #     return JsonResponse({
+        #         'status': 'error',
+        #         'message': 'Tidak ada data wajah terdaftar'
+        #     })
 
         # ======================================================
         # 6. MATCHING
@@ -243,9 +243,13 @@ def absence(request):
 
             status_out = "Pulang Cepat" if now < jadwal_out else "Tepat Waktu"
 
-            existing_absen.date_out = now
-            existing_absen.status_out = status_out
-            existing_absen.save()
+            # if existing_absen:
+            request.session["pending_absence"] = {
+                "mode": "PULANG",
+                "absence_id": existing_absen.id,
+                "status_out": status_out,
+                "time": now.isoformat()
+            }
 
             time = MasterSchedules.objects.get(id=existing_absen.schedule.id)
 
@@ -255,7 +259,7 @@ def absence(request):
                 'status': 'success',
                 'type': 'Pulang',
                 'shift': existing_absen.shift_order,
-                'message': f'Absen pulang shift {time.start_time} berhasil',
+                'message': f'Absen pulang shift {time.start_time}',
                 'status_absen': status_out,
                 'nik': user.nik,
                 'name': user.name,
@@ -311,19 +315,21 @@ def absence(request):
 
                 status_in = "Tepat Waktu" if now <= jadwal_in_today else "Terlambat"
 
-                InAbsences.objects.create(
-                    nik=user,
-                    date_in=now,
-                    status_in=status_in,
-                    schedule=sched,
-                    shift_order=jadwal.shift_order
-                )
+                request.session["pending_absence"] = {
+                    "mode": "MASUK",
+                    "user_id": user.nik,
+                    "schedule_id": sched.id,
+                    "shift_order": jadwal.shift_order,
+                    "status_in": status_in,
+                    "time": now.isoformat()
+                }
+
                 print(f'Absen masuk shift {jadwal.shift_order} - {sched.start_time}')
                 return JsonResponse({
                     'status': 'success',
                     'type': 'Masuk',
                     'shift': jadwal.shift_order,
-                    'message': f'Absen masuk shift {jadwal.schedule.start_time} berhasil',
+                    'message': f'Absen masuk shift {jadwal.schedule.start_time}',
                     'status_absen': status_in,
                     'nik': user.nik,
                     'name': user.name,
@@ -350,6 +356,38 @@ def absence(request):
     finally:
         if 'temp_path' in locals():
             default_storage.delete(temp_path)
+
+def confirm_absence(request):
+    action = request.POST.get("action")
+    temp = request.session.get("pending_absence")
+
+    if not temp:
+        return JsonResponse({"status": "error", "message": "Data tidak ditemukan"})
+
+    if action == "no":
+        del request.session["pending_absence"]
+        return JsonResponse({"status": "cancelled"})
+
+    if action == "yes":
+        if temp["mode"] == "MASUK":
+            InAbsences.objects.create(
+                nik_id=temp["user_id"],
+                date_in=temp["time"],
+                status_in=temp["status_in"],
+                schedule_id=temp["schedule_id"],
+                shift_order=temp["shift_order"]
+            )
+
+        if temp["mode"] == "PULANG":
+            absen = InAbsences.objects.get(id=temp["absence_id"])
+            absen.date_out = temp["time"]
+            absen.status_out = temp["status_out"]
+            absen.save()
+
+        del request.session["pending_absence"]
+
+        message = 'Semangat Bekerja 💪🏼' if temp["mode"] == "MASUK" else 'Hati-hati di Jalan 🛵'
+        return JsonResponse({'status': 'success', 'minor_message': message})
 
 @login_auth
 def pengajuan_cuti(request):

@@ -3,6 +3,7 @@ from .views import *
 
 urlpatterns = [
     path('absensi/', absence, name='absence'),
+    path('absensi/konfirmasi/', confirm_absence, name='confirm_absence'),
 
     path('pengajuan_cuti/', pengajuan_cuti, name='pengajuan_cuti'),
     path('pengajuan_cuti/edit/<int:id>', edit_pengajuan_cuti, name='edit_pengajuan_cuti'),
