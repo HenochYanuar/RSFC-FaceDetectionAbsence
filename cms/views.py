@@ -1635,7 +1635,13 @@ def rekap_kehadiran(request):
 
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
+    divisi_id = request.GET.get('divisi')
     page_number = request.GET.get('page', 1)
+
+    users_qs = Users.objects.all().order_by('divisi')
+
+    if divisi_id:
+        users_qs = users_qs.filter(divisi=divisi_id)
 
     rekap = []
 
@@ -1657,7 +1663,7 @@ def rekap_kehadiran(request):
         datetime.combine(end_date_obj, time.max)
     )
 
-    for user in Users.objects.all().order_by('divisi'):
+    for user in users_qs:
         rekap.append({
             'nik': user.nik,
             'nama': user.name,
@@ -1707,6 +1713,7 @@ def rekap_kehadiran(request):
         'query_string': urlencode(query_params),
         'start_date': start_date_obj.strftime('%Y-%m-%d'),
         'end_date': end_date_obj.strftime('%Y-%m-%d'),
+        'divisi_list': MasterDivisions.objects.all(),
         'title': 'Rekap Kehadiran Karyawan'
     }
 
@@ -1726,7 +1733,6 @@ def rekap_kehadiran_detail(request, nik):
 
     today = timezone.localdate()
 
-    # DEFAULT: tanggal 1 bulan ini - hari ini
     if not start_date or not end_date:
         start_date_obj = today.replace(day=1)
         end_date_obj = today
@@ -1783,7 +1789,6 @@ def rekap_kehadiran_detail(request, nik):
         elif absen.shift_order == 2:
             total_jam_lembur += jam
 
-    # bulatkan 2 desimal (opsional)
     total_jam_kerja = round(total_jam_kerja, 2)
     total_jam_lembur = round(total_jam_lembur, 2)
 
@@ -1807,7 +1812,6 @@ def rekap_kehadiran_detail(request, nik):
         if days > 0:
             cuti_detail[cuti.leave_type.name] += days
 
-    # ubah ke list agar mudah di template
     cuti_detail = [
         {'name': name, 'total': total}
         for name, total in cuti_detail.items()
@@ -1861,11 +1865,9 @@ def rekap_kehadiran_detail(request, nik):
         total_jam_izin_keluar
     )
 
-    # pengaman jika minus
     if total_jam_efektif < 0:
         total_jam_efektif = 0
 
-    # pembulatan rapi
     total_jam_izin_keluar = round(total_jam_izin_keluar, 2)
     total_jam_efektif = round(total_jam_efektif, 2)
 
@@ -1884,7 +1886,6 @@ def rekap_kehadiran_detail(request, nik):
         'cuti_detail': cuti_detail,
         'izin_detail': izin_detail,
 
-        # IZIN KELUAR
         'izin_keluar_list': izin_keluar_list,
         'total_izin_keluar': total_izin_keluar,
         'total_durasi_keluar': total_durasi_keluar,
