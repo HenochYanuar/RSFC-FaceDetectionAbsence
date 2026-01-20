@@ -73,107 +73,94 @@ def is_long_shift(shift1, shift2, max_gap_minutes=60):
     )
     return timedelta(0) <= gap <= timedelta(minutes=max_gap_minutes)
 
+def decode_base64_image(photo_data):
+    try:
+        format, imgstr = photo_data.split(';base64,')
+        ext = format.split('/')[-1]
+        img_bytes = base64.b64decode(imgstr)
+        return img_bytes, ext
+    except Exception:
+        return None, None
+
+def extract_face_encoding(img_bytes, ext):
+    import uuid
+    temp_path = None
+    try:
+        temp_name = f"temp_face_{uuid.uuid4().hex}.{ext}"
+        temp_path = default_storage.save(temp_name, ContentFile(img_bytes))
+        temp_full = default_storage.path(temp_path)
+
+        img = cv2.imread(temp_full)
+        if img is None:
+            return None, "Gagal membaca gambar wajah"
+
+        h, w, _ = img.shape
+        if h < 80 or w < 80:
+            return None, "Wajah terlalu kecil / terlalu jauh"
+
+        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        encodings = face_recognition.face_encodings(rgb)
+        if not encodings:
+            return None, "Wajah tidak terdeteksi"
+
+        return encodings[0], None
+    finally:
+        if temp_path and default_storage.exists(temp_path):
+            default_storage.delete(temp_path)
+
+def get_known_faces_from_cache(UserModel):
+    """Mengambil data encoding wajah dari cache atau database."""
+    db_count = UserModel.objects.exclude(face_encoding=None).count()
+    cached_enc = cache.get("known_face_encodings")
+    cached_users = cache.get("known_face_users")
+
+    if not cached_enc or len(cached_enc) != db_count:
+        users = UserModel.objects.exclude(face_encoding=None).only(
+            "nik", "name", "face_encoding"
+        )
+
+        known_encodings = []
+        user_list = []
+
+        for u in users:
+            try:
+                known_encodings.append(pickle.loads(u.face_encoding))
+                user_list.append(u)
+            except Exception:
+                continue
+
+        cache.set("known_face_encodings", known_encodings, 86400)
+        cache.set("known_face_users", user_list, 86400)
+        return known_encodings, user_list
+    
+    return cached_enc, cached_users
+
 def absence(request):
     if request.method != 'POST':
         return render(request, 'user/absence.html')
 
     try:
-        # ======================================================
-        # 1. AMBIL & VALIDASI BASE64 FOTO
-        # ======================================================
+        # 1. Ambil & Validasi Input
         photo_data = request.POST.get('photo')
         if not photo_data:
-            return JsonResponse({'status': 'error', 'message': 'Foto tidak valid'})
+            return JsonResponse({'status': 'error', 'message': 'Foto tidak ditemukan'})
 
-        try:
-            format, imgstr = photo_data.split(';base64,')
-            ext = format.split('/')[-1]
-            img_bytes = base64.b64decode(imgstr)
-        except Exception:
+        # 2. Decode Base64
+        img_bytes, ext = decode_base64_image(photo_data)
+        if not img_bytes:
             return JsonResponse({'status': 'error', 'message': 'Format foto tidak valid'})
 
-        # ======================================================
-        # 2. SIMPAN FILE TEMPORARY 
-        # ======================================================
-        import uuid
-        temp_name = f"temp_face_{uuid.uuid4().hex}.{ext}"
-        temp_path = default_storage.save(temp_name, ContentFile(img_bytes))
-        temp_full = default_storage.path(temp_path)
+        # 3. Ambil Encoding dari Foto Upload
+        uploaded_enc, error_msg = extract_face_encoding(img_bytes, ext)
+        if error_msg:
+            return JsonResponse({'status': 'error', 'message': error_msg})
 
-        # ======================================================
-        # 3. LOAD + PREPROCESS IMAGE
-        # ======================================================
-        img = cv2.imread(temp_full)
-        if img is None:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Gagal membaca gambar wajah'
-            })
-
-        h, w, _ = img.shape
-        if h < 80 or w < 80:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Wajah terlalu kecil / terlalu jauh'
-            })
-
-        # Resize konsisten (WAJIB)
-        # img = cv2.resize(img, (160, 160))
-
-        # BGR → RGB
-        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        # ======================================================
-        # 4. FACE ENCODING
-        # ======================================================
-        uploaded_encs = face_recognition.face_encodings(rgb)
-        if not uploaded_encs:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Wajah tidak terdeteksi'
-            })
-
-        uploaded_enc = uploaded_encs[0]
-
-        # ======================================================
-        # 5. LOAD CACHE ENCODING USER
-        # ======================================================
-        db_count = Users.objects.exclude(face_encoding=None).count()
-
-        cached_enc = cache.get("known_face_encodings")
-        cached_users = cache.get("known_face_users")
-
-        if not cached_enc or len(cached_enc) != db_count:
-            users = Users.objects.exclude(face_encoding=None).only(
-                "nik", "name", "face_encoding"
-            )
-
-            known_encodings = []
-            user_list = []
-
-            for u in users:
-                try:
-                    known_encodings.append(pickle.loads(u.face_encoding))
-                    user_list.append(u)
-                except Exception:
-                    continue
-
-            cache.set("known_face_encodings", known_encodings, 86400)
-            cache.set("known_face_users", user_list, 86400)
-
-            print("DB count:", db_count)
-            print(f"Cache Re-loaded. Total: {len(known_encodings)}")
-        else:
-            print("Menggunakan data dari cache.")
-            known_encodings = cached_enc
-            user_list = cached_users
-
+        # 4. Ambil Data Wajah Terdaftar (Cache/DB)
+        known_encodings, user_list = get_known_faces_from_cache(Users)
         if not known_encodings:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Tidak ada data wajah terdaftar'
-            })
-
+            return JsonResponse({'status': 'error', 'message': 'Tidak ada data wajah terdaftar'})
+        
         # ======================================================
         # 5. LOAD ENCODING USER (TANPA CACHE)
         # ======================================================
@@ -334,19 +321,15 @@ def absence(request):
                 "time": now.isoformat()
             }
 
-            local_datetime = timezone.localtime(existing_absen.date_in)
-            
-            tanggal_pulang = local_datetime.date()
-
             time = MasterSchedules.objects.get(id=existing_absen.schedule.id)
 
-            print(f'Absen pulang tanggal {tanggal_pulang} shift {existing_absen.shift_order} - {time.start_time}')
+            print(f'Absen pulang tanggal {existing_absen.date_in.date()} shift {existing_absen.shift_order} - {time.start_time}')
 
             return JsonResponse({
                 'status': 'success',
                 'type': 'Pulang',
                 'shift': existing_absen.shift_order,
-                'message': f'Tanggal <b>{tanggal_pulang}</b> shift <b>{time.start_time} - {time.end_time}</b>',
+                'message': f'Tanggal <b>{existing_absen.date_in.date()}</b> shift <b>{time.start_time} - {time.end_time}</b>',
                 'status_absen': status_out,
                 'nik': user.nik,
                 'name': user.name,
@@ -510,10 +493,6 @@ def absence(request):
             'status': 'error',
             'message': f'Error: {str(e)}'
         })
-
-    finally:
-        if 'temp_path' in locals():
-            default_storage.delete(temp_path)
 
 def confirm_absence(request):
     from django.utils import timezone
@@ -1257,3 +1236,7 @@ def balik_keluar_bentar(request):
     )
 
     return redirect('keluar_bentar')
+
+
+
+
