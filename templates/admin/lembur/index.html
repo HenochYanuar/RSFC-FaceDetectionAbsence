@@ -1,0 +1,170 @@
+{% extends "layouts/layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <div class="card mb-5 shadow">
+    <div class="card-header py-3">
+      <h3 class="card-title mb-2 text-gray-800">Daftar Lembur Karyawan</h3>
+
+      <div class="card-tools">
+        <button class="btn btn-tool text-primary mr-2" data-card-widget="collapse">
+          <i class="fas fa-minus"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body table-responsive p-0">
+      <table class="table table-hover text-nowrap">
+        <thead>
+          <tr class="text-center">
+            <th>Nama</th>
+            <th>NIK</th>
+            <th>Tanggal</th>
+            <th>Masuk</th>
+            <th>Pulang</th>
+            <th>Durasi</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lembur in lembur_list %}
+          <tr class="text-center">
+            <td class='text-left'>{{ lembur.nik.name }}</td>
+            <td class='text-left'>{{ lembur.nik.nik }}</td>
+            <td>{{ lembur.overtime_date|date:"d M Y" }}</td>
+            <td>{{ lembur.start_date|date:"H:i:s" }}</td>
+            <td>
+              {% if lembur.end_date %}
+                {{ lembur.end_date|date:"H:i:s" }}
+              {% else %}
+                <span class="badge badge-warning">Belum Pulang</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if lembur.end_date %}
+                {{ lembur.total_jam }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td>
+                <span class="badge {% if lembur.status == 'APPROVED' %} badge-primary {% elif lembur.status == 'REJECTED' %} badge-danger {% else %} badge-info {% endif %}">{{ lembur.status }}</span>
+            </td>
+
+            <td>
+              <a href="{% url 'detail_lembur' lembur.id %}" class="btn btn-sm btn-info my-1"><i class="fa fa-search-plus"></i> Detail</a> 
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center text-muted">
+              Tidak ada data lembur
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+
+<div class="container-fluid">
+
+  <div class="card mb-5 shadow collapsed-card">
+    <div class="card-header py-3">
+      <h3 class="card-title mb-2 text-gray-800">Daftar Lembur Karyawan Selesai</h3>
+
+      <div class="card-tools">
+        <button class="btn btn-tool text-primary mr-2" data-card-widget="collapse">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body table-responsive p-0">
+      <table class="table table-hover text-nowrap">
+        <thead>
+          <tr class="text-center">
+            <th>Nama</th>
+            <th>NIK</th>
+            <th>Tanggal</th>
+            <th>Masuk</th>
+            <th>Pulang</th>
+            <th>Durasi</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lembur in done_lembur_list %}
+          <tr class="text-center">
+            <td class='text-left'>{{ lembur.nik.name }}</td>
+            <td class='text-left'>{{ lembur.nik.nik }}</td>
+            <td>{{ lembur.overtime_date|date:"d M Y" }}</td>
+            <td>{{ lembur.start_date|date:"H:i:s" }}</td>
+            <td>
+              {% if lembur.end_date %}
+                {{ lembur.end_date|date:"H:i:s" }}
+              {% else %}
+                <span class="badge badge-warning">Belum Pulang</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if lembur.end_date %}
+                {{ lembur.total_jam }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td>
+                <span class="badge {% if lembur.status == 'APPROVED' %} badge-primary {% elif lembur.status == 'REJECTED' %} badge-danger {% else %} badge-info {% endif %}">{{ lembur.status }}</span>
+            </td>
+
+            <td>
+              <a href="{% url 'detail_lembur' lembur.id %}" class="btn btn-sm btn-info my-1"><i class="fa fa-search-plus"></i> Detail</a> 
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center text-muted">
+              Tidak ada data lembur
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{% if messages %}
+<script>
+    {% for message in messages %}
+    Swal.fire({
+        icon: "{{ message.tags }}",  
+        title: "{{ message.tags|capfirst }}",
+        text: "{{ message }}",
+        showConfirmButton: false,
+        timer: 3000
+    });
+    {% endfor %}
+</script>
+{% endif %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% endblock %}
+

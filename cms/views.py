@@ -2104,3 +2104,74 @@ def rekap_kehadiran_print(request):
         'master_cuti': master_cuti,
         'master_izin': master_izin,
     })
+
+@login_auth
+@admin_required
+@superadmin_required
+def lembur(request):
+    from datetime import timedelta
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
+
+    lembur_list = Overtimes.objects.filter(status='SUBMITTED').order_by('-overtime_date')
+    done_lembur_list = Overtimes.objects.filter(status__in=['APPROVED', 'REJECTED']).order_by('-overtime_date')
+
+    for lembur in lembur_list:
+        second = lembur.duration_minutes * 60
+        total_jam = timedelta_to_hms(timedelta(seconds=second))
+        lembur.total_jam = total_jam
+
+    context = {
+        'user': user,
+        'lembur_list': lembur_list,
+        'done_lembur_list': done_lembur_list,
+        'title': 'Daftar Pengajuan Lembur Karyawan'
+    }
+
+    return render(request, 'admin/lembur/index.html', context)
+
+@login_auth
+@admin_required
+@superadmin_required
+def detail_lembur(request, id):
+    from datetime import timedelta
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
+    lembur = get_object_or_404(Overtimes, id=id)
+
+    second = lembur.duration_minutes * 60
+    total_jam = timedelta_to_hms(timedelta(seconds=second))
+    lembur.total_jam = total_jam
+
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        notes = request.POST.get('notes')
+
+        try:
+            lembur.status = status
+            lembur.notes = notes
+            lembur.approved_by = user
+            lembur.approved_at = timezone.now()
+            lembur.save()
+
+            messages.success(request, 'Data persetujuan lembur berhasil disimpan.')
+            return redirect('/admins/lembur')
+
+        except Exception as e:
+            messages.error(
+                request,
+                f'Gagal menyimpan data persetujuan lembur. Error: {e}'
+            )
+            return redirect('/admins/lembur')
+        
+    status_choices = (
+        ['Pending', 'Approved', 'Rejected']
+        if user.is_admin == 1
+        else ['Approved', 'Rejected']
+    )   
+
+    context = {
+        'user': user,
+        'lembur': lembur,
+        'title': 'Detail Pengajuan Lembur Karyawan',
+        'status_choices': status_choices
+    }   
+    return render(request, 'admin/lembur/detail.html', context)
