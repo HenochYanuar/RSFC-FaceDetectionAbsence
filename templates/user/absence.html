@@ -30,6 +30,7 @@
         </div>
 
         <input type="hidden" name="photo" id="photoInput">
+        <input type="hidden" name="mode" id="modeInput" value="">
 
         <div class="button-container">
             <button style="display:None;" type="button" id="manualCaptureBtn">Capture</button>
@@ -47,7 +48,7 @@
 
     <div id="introModal" class="intro-modal">
         <div class="intro-content">
-            <h2>Kedipkan Mata Setelah "START"</h2>
+            <h2>Kedipkan Mata Setelah "CLICK"</h2>
             <div id="modalVideoContainer" class="video-preview-container">
                 <video id="introVideo" width="100%" autoplay loop muted playsinline>
                     <source src="{% static '/assets/videos/iki_seng_kanggo.mp4' %}" type="video/mp4">
@@ -55,9 +56,12 @@
                 </video>
             </div>
             <p>
-                Tekan tombol "START" untuk presensi
+                Tekan tombol <br> <b>"ABSEN"</b> untuk presensi | <b>"LEMBUR"</b> untuk lembur.
             </p>
-            <button id="startBtn" class="intro-btn">START</button>
+            <div class="button-container">
+                <button id="startBtn" class="intro-btn">ABSEN</button>
+                <button id="overtimeBtn" class="intro-btn">LEMBUR</button>
+            </div>
         </div>
     </div>
 
@@ -76,8 +80,10 @@
 
     <script>
         const ABSENCE_URL = "{% url 'absence' %}";
+        const CHOOSE_MODE_URL = "{% url 'choose_mode' %}";
         const CSRF_TOKEN = "{{ csrf_token }}";
         const CONFIRM_URL = "{% url 'confirm_absence' %}"
+        const CONFIRM_OVERTIME_URL = "{% url 'confirm_overtime' %}";
     </script>
     
     {% comment %} <script src= "{% static '/assets/scripts/absence.js' %}"></script> {% endcomment %}

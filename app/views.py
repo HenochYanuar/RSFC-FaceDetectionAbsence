@@ -136,6 +136,16 @@ def get_known_faces_from_cache(UserModel):
     
     return cached_enc, cached_users
 
+def choose_mode(request):
+    mode = request.POST.get("mode")
+    print(f'Mode chosen: {mode}')
+    if mode == "ABSEN":
+        return absence(request)
+    elif mode == "LEMBUR":
+        return overtime(request)
+    else:
+        return JsonResponse({"status": "error", "message": "Mode tidak valid"})
+
 def absence(request):
     if request.method != 'POST':
         return render(request, 'user/absence.html')
@@ -660,6 +670,176 @@ def confirm_absence(request):
         "minor_message": message
     })
 
+def overtime(request):
+    if request.method != 'POST':
+        return render(request, 'user/absence.html')
+
+    try:
+        # 1. Ambil & Validasi Input
+        photo_data = request.POST.get('photo')
+        if not photo_data:
+            return JsonResponse({'status': 'error', 'message': 'Foto tidak ditemukan'})
+
+        # 2. Decode Base64
+        img_bytes, ext = decode_base64_image(photo_data)
+        if not img_bytes:
+            return JsonResponse({'status': 'error', 'message': 'Format foto tidak valid'})
+
+        # 3. Ambil Encoding dari Foto Upload
+        uploaded_enc, error_msg = extract_face_encoding(img_bytes, ext)
+        if error_msg:
+            return JsonResponse({'status': 'error', 'message': error_msg})
+
+        # 4. Ambil Data Wajah Terdaftar (Cache/DB)
+        known_encodings, user_list = get_known_faces_from_cache(Users)
+        if not known_encodings:
+            return JsonResponse({'status': 'error', 'message': 'Tidak ada data wajah terdaftar'})
+
+        # ======================================================
+        # 6. MATCHING
+        # ======================================================
+        threshold = calculate_dynamic_threshold(known_encodings)
+        print(f'Thershold: {threshold}')
+        distances = face_recognition.face_distance(known_encodings, uploaded_enc)
+
+        best_idx = np.argmin(distances)
+        best_distance = distances[best_idx]
+        print(f'User encode: {best_distance}')
+
+        if best_distance > 0.4:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Gagal mengenali wajah, coba lagi ya...'
+            })
+
+        user = user_list[best_idx]
+        print(f'Name: {user.name}')
+
+        # ======================================================
+        # 7. LOGIC ABSENSI 
+        # ======================================================
+        from django.utils import timezone
+        from datetime import time
+
+        now = timezone.localtime(timezone.now())
+        today = now.date()
+        tz_jakarta = pytz.timezone('Asia/Jakarta')
+        start_of_day = timezone.make_aware(datetime.combine(today, time.min), tz_jakarta)
+        end_of_day = timezone.make_aware(datetime.combine(today, time.max), tz_jakarta)
+
+        if not user:
+            return JsonResponse({"status": "error", "message": "Wajah tidak dikenali"})
+
+        # 2. CEK LEMBUR AKTIF
+        active_ot = Overtimes.objects.filter(
+            nik=user,
+            end_date__isnull=True
+        ).first()
+
+        # ======================
+        # PULANG LEMBUR
+        # ======================
+        if active_ot:
+            duration_minutes = int((now - active_ot.start_date).total_seconds() // 60)
+            request.session["pending_overtime"] = {
+                "mode": "PULANG",
+                "overtime_id": active_ot.id,
+                "duration_minutes": duration_minutes,
+                "time": now.isoformat()
+            }
+
+            #duration_minutes on HH:MM:ss format
+            duration_minutes_hours = duration_minutes // 60
+            duration_minutes_remainder = duration_minutes % 60
+            duration_minutes = f"{duration_minutes_hours} jam {duration_minutes_remainder} menit"
+
+            return JsonResponse({
+                "status": "success",
+                "type": "Pulang Lembur",
+                "shift": "-",
+                "message": f"Tanggal <b>{active_ot.start_date.date()}</b>. Total <b>{duration_minutes}</b>",
+                "status_absen": 'Submitted',
+                "nik": user.nik,
+                "name": user.name,
+                "date": now.strftime('%Y-%m-%d'),
+                "time": now.strftime("%H:%M:%S"),
+                "minor_message": "Semangat bekerja 💪🏼"
+            })
+        
+        # ======================
+        # MASUK LEMBUR
+        # ======================
+        request.session["pending_overtime"] = {
+            "mode": "MASUK",
+            "user_id": user.nik,
+            "time": now.isoformat(),
+            "date": today.isoformat()
+        }
+
+        return JsonResponse({
+            "status": "success",
+            "type": "Masuk Lembur",
+            "shift": "-",
+            "message": f"Tanggal <b>{now.strftime('%Y-%m-%d')}</b>",
+            "status_absen": 'Draft',
+            "nik": user.nik,
+            "name": user.name,
+            "date": now.strftime('%Y-%m-%d'),
+            "time": now.strftime("%H:%M:%S"),
+            "minor_message": "Semangat bekerja 💪🏼"
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error: {str(e)}'
+        })
+    
+def confirm_overtime(request):
+    from django.utils import timezone
+
+    action = request.POST.get("action")
+    temp = request.session.get("pending_overtime")
+
+    if not temp:
+        return JsonResponse({"status": "error", "message": "Data tidak ditemukan"})
+
+    if action == "no":
+        del request.session["pending_overtime"]
+        return JsonResponse({"status": "cancelled"})
+
+    now = timezone.localtime()
+
+    if temp["mode"] == "MASUK":
+        Overtimes.objects.create(
+            nik_id=temp["user_id"],
+            overtime_date=temp["date"],
+            start_date=temp["time"],
+            status="DRAFT"
+        )
+
+    elif temp["mode"] == "PULANG":
+        ot = Overtimes.objects.get(id=temp["overtime_id"])
+        ot.end_date = temp["time"]
+        ot.status = "SUBMITTED"
+        ot.duration_minutes = temp["duration_minutes"]
+        ot.save()
+
+    else:
+        return JsonResponse({"status": "error", "message": "Mode tidak dikenal"})
+
+    del request.session["pending_overtime"]
+
+    message = (
+        "Semangat lembur 💪🏼 😭"
+        if "MASUK" in temp["mode"]
+        else "Hati-hati di jalan 🛵 🥲"
+    )
+
+    return JsonResponse({
+        "status": "success",
+        "minor_message": message
+    })
 
 @login_auth
 def pengajuan_cuti(request):
@@ -1181,7 +1361,7 @@ def keluar_bentar(request):
         OutPermission.objects.create(
             nik=user,
             date=today,
-            time_out=timezone.now(),
+            end_date=timezone.now(),
             reason=reason,
             status='Keluar'
         )

@@ -75,9 +75,11 @@ function drawLandmarks(landmarks, connections, boundingBox) {
   }
 }
 
-function sendConfirmation(action) {
+function sendConfirmation(action, mode) {
+  const url = mode === "LEMBUR" ? CONFIRM_OVERTIME_URL : CONFIRM_URL;
+  
   $.post({
-    url: CONFIRM_URL,
+    url: url,
     data: {
       action: action,
       csrfmiddlewaretoken: CSRF_TOKEN
@@ -126,8 +128,10 @@ function autoCaptureAndSend() {
   const form = document.getElementById('absenForm');
   const fd = new FormData(form);
 
+  const mode = fd.get('mode');
+
   $.ajax({
-    url: ABSENCE_URL,
+    url: CHOOSE_MODE_URL,
     method: 'POST',
     data: fd,
     processData: false,
@@ -164,9 +168,9 @@ function autoCaptureAndSend() {
           cancelButtonText: "❌ Tidak Sesuai",
         }).then((result) => {
           if (result.isConfirmed) {
-            sendConfirmation("yes");
+            sendConfirmation("yes", mode);
           } else {
-            sendConfirmation("no");
+            sendConfirmation("no", mode);
           }
         });
       } else {
@@ -289,9 +293,18 @@ function startCameraAndFaceMesh() {
 
 document.addEventListener("DOMContentLoaded", function() {
     const modal = document.getElementById("introModal");
+    const modeInput = document.getElementById("modeInput");
     const startButton = document.getElementById("startBtn");
+    const overtimeButton = document.getElementById("overtimeBtn");
 
     startButton.addEventListener("click", function() {
+        modeInput.value = "ABSEN";
+        modal.style.display = "none";
+        startCameraAndFaceMesh();
+    });
+
+    overtimeButton.addEventListener("click", function() {
+        modeInput.value = "LEMBUR";
         modal.style.display = "none";
         startCameraAndFaceMesh();
     });

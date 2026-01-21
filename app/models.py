@@ -98,3 +98,26 @@ class OutPermission(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+class Overtimes(models.Model):
+    id = models.AutoField(primary_key=True)
+    nik = models.ForeignKey(Users,on_delete=models.CASCADE,related_name="overtimes")
+    overtime_date = models.DateField()
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField(null=True, blank=True)
+    duration_minutes = models.PositiveIntegerField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("DRAFT", "Draft"),
+            ("SUBMITTED", "Submitted"),
+            ("APPROVED", "Approved"),
+            ("REJECTED", "Rejected"),
+        ],
+        default="DRAFT"
+    )
+    approved_by = models.ForeignKey(Users,null=True,blank=True,on_delete=models.SET_NULL, related_name="approved_overtimes")
+    approved_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
