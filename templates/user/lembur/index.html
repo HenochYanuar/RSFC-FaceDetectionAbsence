@@ -6,7 +6,7 @@
 
   <div class="card mb-5 shadow">
     <div class="card-header py-3">
-      <h3 class="card-title mb-2 text-gray-800">Daftar Lembur Karyawan</h3>
+      <h3 class="card-title mb-2 text-gray-800">Daftar Lembur</h3>
 
       <div class="card-tools">
         <button class="btn btn-tool text-primary mr-2" data-card-widget="collapse">
@@ -53,11 +53,11 @@
             </td>
 
             <td>
-                <span class="badge {% if lembur.status == 'APPROVED' %} badge-primary {% elif lembur.status == 'REJECTED' %} badge-danger {% elif lembur.status == 'DIVISI APPROVED' %} badge-warning {% else %} badge-info {% endif %}">{{ lembur.status }}</span>
+                <span class="badge {% if lembur.status == 'APPROVED' %} badge-primary {% elif lembur.status == 'REJECTED' %} badge-danger {% elif lembur.status == 'DRAFT' or lembur.status == 'DIVISI APPROVED' %} badge-warning {% else %} badge-info {% endif %}">{{ lembur.status }}</span>
             </td>
 
             <td>
-              <a href="{% url 'detail_lembur' lembur.id %}" class="btn btn-sm btn-info my-1"><i class="fa fa-search-plus"></i> Detail</a> 
+              <a href="{% url 'detail_pengajuan_lembur' lembur.id %}" class="btn btn-sm btn-info my-1"><i class="fa fa-search-plus"></i> Detail</a> 
             </td>
           </tr>
           {% empty %}
@@ -80,7 +80,7 @@
 
   <div class="card mb-5 shadow collapsed-card">
     <div class="card-header py-3">
-      <h3 class="card-title mb-2 text-gray-800">Daftar Lembur Karyawan Selesai</h3>
+      <h3 class="card-title mb-2 text-gray-800">Daftar Pengajuan Lembur</h3>
 
       <div class="card-tools">
         <button class="btn btn-tool text-primary mr-2" data-card-widget="collapse">
@@ -131,11 +131,11 @@
             </td>
 
             <td>
-              {% if lembur.status == 'APPROVED' %}
-                <span class="badge {% if lembur.status == 'APPROVED' %} badge-primary {% else %} badge-info {% endif %}">{{ lembur.status }}</span>
-              {% else %}
-                <a href="{% url 'detail_lembur' lembur.id %}" class="btn btn-sm btn-info my-1"><i class="fa fa-search-plus"></i> Detail</a>
-              {% endif %}
+              {% comment %} {% if lembur.status == 'APPROVED' or lembur.status == 'DIVISI APPROVED' %}
+                <span class="badge {% if lembur.status == 'APPROVED' %} badge-primary {% elif lembur.status == 'REJECTED' %} badge-danger {% elif lembur.status == 'DIVISI APPROVED' %} badge-warning {% else %} badge-info {% endif %}">{{ lembur.status }}</span>
+              {% else %} {% endcomment %}
+                <a href="{% url 'detail_pengajuan_lembur' lembur.id %}" class="btn btn-sm btn-info my-1"><i class="fa fa-search-plus"></i> Detail</a> 
+              {% comment %} {% endif %} {% endcomment %}
             </td>
           </tr>
           {% empty %}

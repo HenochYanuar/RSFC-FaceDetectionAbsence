@@ -1427,6 +1427,78 @@ def balik_keluar_bentar(request):
 
     return redirect('keluar_bentar')
 
+def timedelta_to_hms(td):
+    if not td:
+        return "00:00:00"
 
+    total_seconds = int(td.total_seconds())
 
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
 
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+@login_auth
+def pengajuan_lembur(request):
+    user = get_object_or_404(Users, nik=request.session.get('nik_id'))
+
+    lembur_list = Overtimes.objects.filter(status='DRAFT').order_by('-overtime_date')
+    done_lembur_list = Overtimes.objects.filter(status__in=['SUBMITTED', 'DIVISI APPROVED', 'APPROVED', 'REJECTED']).order_by('-overtime_date')
+
+    for lembur in lembur_list:
+        second = lembur.duration_minutes * 60 if lembur.end_date != None else 0
+        total_jam = timedelta_to_hms(timedelta(seconds=second))
+        lembur.total_jam = total_jam
+
+    for lembur in done_lembur_list:
+        second = lembur.duration_minutes * 60 if lembur.end_date != None else 0
+        total_jam = timedelta_to_hms(timedelta(seconds=second))
+        lembur.total_jam = total_jam
+
+    context = {
+        'user': user,
+        'lembur_list': lembur_list,
+        'done_lembur_list': done_lembur_list,
+        'title': 'Pengajuan Lembur'
+    }
+
+    return render(request, 'user/lembur/index.html', context)
+
+@login_auth
+def detail_pengajuan_lembur(request, id):
+    user = get_object_or_404(Users, nik=request.session.get('nik_id'))
+
+    if request.method == 'POST':
+        approved_by = request.POST.get('approved_by')
+        reason = request.POST.get('reason')
+
+        lembur = get_object_or_404(Overtimes, id=id)
+
+        if approved_by and reason:
+            boss_obj = get_object_or_404(Users, nik=approved_by)
+            lembur.approved_by = boss_obj
+            lembur.reason = reason
+            lembur.status = 'SUBMITTED'
+            lembur.save()
+            messages.success(request, 'Pengajuan lembur berhasil diperbarui.')
+        else:
+            messages.error(request, 'Pengajuan lembur gagal diperbarui.')
+
+        return redirect('/users/pengajuan_lembur')
+
+    lembur = get_object_or_404(Overtimes, id=id)
+    boss_list = Users.objects.filter(is_admin__in=[1,2]).exclude(nik=user.nik)
+
+    second = lembur.duration_minutes * 60
+    total_jam = timedelta_to_hms(timedelta(seconds=second))
+    lembur.total_jam = total_jam
+
+    context = {
+        'user': user,
+        'lembur': lembur,
+        'boss_list': boss_list,
+        'title': 'Detail Pengajuan Lembur'
+    }
+
+    return render(request, 'user/lembur/detail.html', context)

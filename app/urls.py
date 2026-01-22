@@ -21,5 +21,8 @@ urlpatterns = [
     path('keluar_bentar/', keluar_bentar, name='keluar_bentar'),
     path('keluar_bentar/balik', balik_keluar_bentar, name='balik_keluar_bentar'),
 
-    path('profil/<str:nik>', profile, name='profile')
+    path('profil/<str:nik>', profile, name='profile'),
+
+    path('pengajuan_lembur/', pengajuan_lembur, name='pengajuan_lembur'),
+    path('pengajuan_lembur/<int:id>', detail_pengajuan_lembur, name='detail_pengajuan_lembur'),
 ]

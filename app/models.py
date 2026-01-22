@@ -111,6 +111,7 @@ class Overtimes(models.Model):
         choices=[
             ("DRAFT", "Draft"),
             ("SUBMITTED", "Submitted"),
+            ("DIVISI APPROVED", "Divisi Approved"),
             ("APPROVED", "Approved"),
             ("REJECTED", "Rejected"),
         ],
@@ -118,6 +119,7 @@ class Overtimes(models.Model):
     )
     approved_by = models.ForeignKey(Users,null=True,blank=True,on_delete=models.SET_NULL, related_name="approved_overtimes")
     approved_at = models.DateTimeField(null=True, blank=True)
+    reason = models.TextField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

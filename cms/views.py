@@ -2107,15 +2107,39 @@ def rekap_kehadiran_print(request):
 
 @login_auth
 @admin_required
-@superadmin_required
 def lembur(request):
     from datetime import timedelta
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
-    lembur_list = Overtimes.objects.filter(status='SUBMITTED').order_by('-overtime_date')
-    done_lembur_list = Overtimes.objects.filter(status__in=['APPROVED', 'REJECTED']).order_by('-overtime_date')
+    if user.is_admin == 1:
+        status_filter = ['SUBMITTED']
+        status_exclude = ['DRAFT', 'SUBMITTED']
+        base_filter = {'approved_by': user}
+
+    elif user.is_admin == 2:
+        status_filter = ['DIVISI APPROVED']
+        status_exclude = ['DRAFT', 'SUBMITTED', 'DIVISI APPROVED']
+        base_filter = {}
+
+    lembur_list = Overtimes.objects.filter(
+        status__in=status_filter,
+        **base_filter
+    ).order_by('-overtime_date')
+
+    done_lembur_list = Overtimes.objects.exclude(
+        status__in=status_exclude
+    ).filter(
+        **base_filter
+    )
+    # lembur_list = Overtimes.objects.filter(status='SUBMITTED').order_by('-overtime_date')
+    # done_lembur_list = Overtimes.objects.filter(status__in=['APPROVED', 'REJECTED']).order_by('-overtime_date')
 
     for lembur in lembur_list:
+        second = lembur.duration_minutes * 60
+        total_jam = timedelta_to_hms(timedelta(seconds=second))
+        lembur.total_jam = total_jam
+
+    for lembur in done_lembur_list:
         second = lembur.duration_minutes * 60
         total_jam = timedelta_to_hms(timedelta(seconds=second))
         lembur.total_jam = total_jam
@@ -2131,7 +2155,6 @@ def lembur(request):
 
 @login_auth
 @admin_required
-@superadmin_required
 def detail_lembur(request, id):
     from datetime import timedelta
     user = get_object_or_404(Users, nik=request.session['nik_id'])
@@ -2146,9 +2169,11 @@ def detail_lembur(request, id):
         notes = request.POST.get('notes')
 
         try:
+            if user.is_admin == 1 and status == 'APPROVED':
+                status = 'DIVISI APPROVED'
+
             lembur.status = status
             lembur.notes = notes
-            lembur.approved_by = user
             lembur.approved_at = timezone.now()
             lembur.save()
 

@@ -20,8 +20,10 @@
           </div>
 
           <div class="form-group">
-            <label>Nama PJ/PIC</label>
-            <input type="text" class="form-control" value="{{ lembur.approved_by.name }}" readonly>
+            <label>Status</label>
+            <select name="status" class="form-control" required readonly>
+              <option>{{ lembur.status }}</option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -45,10 +47,9 @@
           </div>
 
           <div class="form-group">
-            <label>Alasan</label>
-            <textarea class="form-control" rows="4" readonly>{{ lembur.reason }}</textarea>
+            <label>Catatan</label>
+            <textarea class="form-control" rows="4" readonly>{{ lembur.notes }}</textarea>
           </div>
-
         </div>
       </div>
     </div>
@@ -57,41 +58,36 @@
     <div class="col-md-6">
       <div class="card card-warning">
         <div class="card-header">
-          <h3 class="card-title">Persetujuan</h3>
+          <h3 class="card-title">Pengajuan</h3>
         </div>
 
-        <form method="POST" action="{% url 'detail_lembur' lembur.id %}">
+        <form method="POST" action="{% url 'detail_pengajuan_lembur' lembur.id %}">
           {% csrf_token %}
           <div class="card-body">
 
             <div class="form-group">
-              <label>Status</label>
-              <select name="status" class="form-control" required>
-                <option value="">-- Pilih --</option>
-                <option value="APPROVED"
-                  {% if lembur.status == "APPROVED" or lembur.status == 'DIVISI APPROVED' %}selected{% endif %}>
-                  Approved
-                </option>
-                <option value="REJECTED"
-                  {% if lembur.status == "REJECTED" %}selected{% endif %}>
-                  Rejected
-                </option>
+              <label>Pilih Atasan (PJ/PIC)</label>
+              <select name="approved_by" class="form-control" required {% if lembur.status == 'APPROVED' or lembur.status == 'DIVISI APPROVED' or lembur.status == 'REJECTED' %}disabled{% endif %}>
+                <option selected disabeld value="">-- Pilih --</option>
+                {% for boss in boss_list %}
+                  <option {% if boss.nik == lembur.approved_by_id %} selected {% endif %} value="{{ boss.nik }}">{{ boss.name }}</option>
+                {% endfor %}
               </select>
             </div>
 
             <div class="form-group">
-              <label>Catatan</label>
-              <textarea name="notes" class="form-control" rows="4"
-                placeholder="Wajib diisi jika ditolak">{{ lembur.notes }}</textarea>
+              <label>Keterangan</label>
+              <textarea name="reason" required class="form-control" rows="4"
+                placeholder="Wajib diisi">{{ lembur.reason }}</textarea>
             </div>
 
           </div>
 
           <div class="card-footer">
-            <button type="submit" class="btn btn-success">
+            <button type="submit" {% if lembur.status == 'APPROVED' or lembur.status == 'DIVISI APPROVED' or lembur.status == 'REJECTED' %} disabled {% endif %}  class="btn btn-success">
               <i class="fas fa-check"></i> Simpan
             </button>
-            <a href="{% url 'lembur' %}" class="btn btn-secondary">
+            <a href="{% url 'pengajuan_lembur' %}" class="btn btn-secondary">
               Kembali
             </a>
           </div>
