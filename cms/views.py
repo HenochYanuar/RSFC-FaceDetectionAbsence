@@ -2066,11 +2066,17 @@ def rekap_kehadiran_print(request):
 
         for a in absensi:
             durasi = a.date_out - a.date_in
+            kerja += durasi
 
-            if a.shift_order == 1:
-                kerja += durasi
-            elif a.shift_order == 2:
-                lembur += durasi
+        lembur_qs = Overtimes.objects.filter(
+            nik=u,
+            overtime_date__range=(start_date_obj, end_date_obj),
+            status='APPROVED'
+        )
+
+        for l in lembur_qs:
+            durasi = l.end_date - l.start_date
+            lembur += durasi
 
         # ===============================
         # TOTAL JAM FINAL
