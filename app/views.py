@@ -1371,7 +1371,7 @@ def keluar_bentar(request):
         OutPermission.objects.create(
             nik=user,
             date=today,
-            end_date=timezone.now(),
+            time_out=timezone.now(),
             reason=reason,
             status='Keluar'
         )

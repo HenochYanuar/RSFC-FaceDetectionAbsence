@@ -55,6 +55,9 @@
                     <h2 class="text-primary">
                         {{ total_jam_kerja }} jam
                     </h2>
+                    <h6 class="text-muted">
+                        ({{ total_jam_kerja_hms }})
+                    </h6>
                 </div>
             </div>
         </div>
@@ -66,6 +69,9 @@
                     <h2 class="text-danger">
                         {{ total_jam_lembur }} jam
                     </h2>
+                    <h6 class="text-muted">
+                        ({{ total_jam_lembur_hms }})
+                    </h6>
                 </div>
             </div>
         </div>
@@ -204,12 +210,15 @@
                 <div class="card-body">
                     <small class="text-muted">Jam Kerja</small>
                     <h4 class="text-primary">{{ total_jam_kerja }} jam</h4>
+                    <h6 class="text-muted">
+                        ({{ total_jam_kerja_hms }})
+                    </h6>
                 </div>
             </div>
         </div>
 
         <div class="col-md-1">
-            <div class="card shadow-sm text-center border-primary pt-3 pb-2">
+            <div class="card shadow-sm text-center border-primary pt-4 pb-4">
                 <div class="card-body">
                     {% comment %} <small class="text-muted">Jam Kerja</small> {% endcomment %}
                     <h4 class="text-muted"><i class="fa fa-plus"></i></h4>
@@ -222,12 +231,15 @@
                 <div class="card-body">
                     <small class="text-muted">Jam Lembur</small>
                     <h4 class="text-danger">{{ total_jam_lembur }} jam</h4>
+                    <h6 class="text-muted">
+                        ({{ total_jam_lembur_hms }})
+                    </h6>
                 </div>
             </div>
         </div>
 
         <div class="col-md-1">
-            <div class="card shadow-sm text-center border-primary pt-3 pb-2">
+            <div class="card shadow-sm text-center border-primary pt-4 pb-4">
                 <div class="card-body">
                     {% comment %} <small class="text-muted">Jam Kerja</small> {% endcomment %}
                     <h4 class="text-muted"><i class="fa fa-minus"></i></h4>
@@ -240,6 +252,9 @@
                 <div class="card-body">
                     <small class="text-muted">Izin Keluar</small>
                     <h4 class="text-warning">{{ total_jam_izin_keluar }} jam</h4>
+                    <h6 class="text-muted">
+                        ({{ total_jam_izin_keluar_hms }})
+                    </h6>
                 </div>
             </div>
         </div>

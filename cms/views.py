@@ -1717,7 +1717,7 @@ def rekap_kehadiran(request):
 @superadmin_required
 def rekap_kehadiran_detail(request, nik):
     from django.db.models import Count, Sum
-    from datetime import datetime, time
+    from datetime import datetime, time, timedelta
     from collections import defaultdict
 
     user = get_object_or_404(Users, nik=request.session['nik_id'])
@@ -1780,13 +1780,24 @@ def rekap_kehadiran_detail(request, nik):
         durasi = absen.date_out - absen.date_in
         jam = durasi.total_seconds() / 3600
 
-        if absen.shift_order == 1:
-            total_jam_kerja += jam
-        elif absen.shift_order == 2:
-            total_jam_lembur += jam
+        total_jam_kerja += jam
+
+    lembur_qs = Overtimes.objects.filter(
+        nik=user_detail,
+        overtime_date__range=(start_date_obj, end_date_obj),
+        status='APPROVED'
+    )
+
+    for lembur in lembur_qs:
+        durasi = lembur.end_date - lembur.start_date
+        jam = durasi.total_seconds() / 3600
+
+        total_jam_lembur += jam
 
     total_jam_kerja = round(total_jam_kerja, 2)
+    total_jam_kerja_hms = timedelta_to_hms(timedelta(hours=total_jam_kerja))
     total_jam_lembur = round(total_jam_lembur, 2)
+    total_jam_lembur_hms = timedelta_to_hms(timedelta(hours=total_jam_lembur))
 
     # ======================
     # CUTI PER JENIS
@@ -1854,6 +1865,7 @@ def rekap_kehadiran_detail(request, nik):
     )['total'] or 0
 
     total_jam_izin_keluar = total_durasi_keluar / 60
+    total_jam_izin_keluar_hms = timedelta_to_hms(timedelta(hours=total_jam_izin_keluar))
 
     total_jam_efektif = (
         total_jam_kerja +
@@ -1868,6 +1880,7 @@ def rekap_kehadiran_detail(request, nik):
     total_jam_efektif = round(total_jam_efektif, 2)
 
     total_jam_efektif_menit = total_jam_efektif * 60
+    total_jam_efektif_menit = timedelta_to_hms(timedelta(minutes=total_jam_efektif_menit))
 
     context = {
         'user': user,
@@ -1878,6 +1891,8 @@ def rekap_kehadiran_detail(request, nik):
         'pulang_cepat': pulang_cepat,
         'total_jam_kerja': total_jam_kerja,
         'total_jam_lembur': total_jam_lembur,
+        'total_jam_kerja_hms': total_jam_kerja_hms,
+        'total_jam_lembur_hms': total_jam_lembur_hms,
 
         'cuti_detail': cuti_detail,
         'izin_detail': izin_detail,
@@ -1887,6 +1902,7 @@ def rekap_kehadiran_detail(request, nik):
         'total_durasi_keluar': total_durasi_keluar,
 
         'total_jam_izin_keluar': total_jam_izin_keluar,
+        'total_jam_izin_keluar_hms': total_jam_izin_keluar_hms,
         'total_jam_efektif': total_jam_efektif,
         'total_jam_efektif_menit': total_jam_efektif_menit,
 
