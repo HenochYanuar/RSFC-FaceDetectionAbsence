@@ -28,8 +28,6 @@ urlpatterns = [
     path('users/', include('app.urls')),
 
     path('admins/', include('cms.urls')),
-
-    path('firebase-messaging-sw.js', firebase_messaging_sw, name='firebase-messaging-sw.js')
 ]
 
 if settings.DEBUG:
