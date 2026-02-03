@@ -1685,6 +1685,12 @@ def rekap_kehadiran(request):
             'hadir': InAbsences.objects.filter(
                 nik=user,
                 date_in__range=(start_datetime, end_datetime),
+            ).exclude(
+                status_in__in=['Libur', 'Cuti', 'Izin']
+            ).count(),
+            'tepat_waktu': InAbsences.objects.filter(
+                nik=user,
+                date_in__range=(start_datetime, end_datetime),
                 status_in='Tepat Waktu'
             ).count(),
             'terlambat': InAbsences.objects.filter(
@@ -1994,6 +2000,13 @@ def rekap_kehadiran_print(request):
         hadir = InAbsences.objects.filter(
             nik=u,
             date_in__range=(start_datetime, end_datetime),
+        ).exclude(
+            status_in__in=['Libur', 'Cuti', 'Izin']
+        ).count()
+
+        tepat_waktu = InAbsences.objects.filter(
+            nik=u,
+            date_in__range=(start_datetime, end_datetime),
             status_in='Tepat Waktu'
         ).count()
 
@@ -2122,6 +2135,7 @@ def rekap_kehadiran_print(request):
             'divisi': u.divisi or '-',
 
             'hadir': hadir,
+            'tepat_waktu': tepat_waktu,
             'terlambat': terlambat,
             'pulang_cepat': pulang_cepat,
 

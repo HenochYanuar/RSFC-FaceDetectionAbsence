@@ -27,3 +27,5 @@ db.sqlite3
 /media/bukti_izin/*.jpg
 
 /staticfiles/
+
+/credential_fcm.json

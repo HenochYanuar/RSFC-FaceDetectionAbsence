@@ -149,6 +149,7 @@
             <th>Nama</th>
             <th>Divisi</th>
             <th>Hadir</th>
+            <th>Tepat Waktu</th>
             <th>Terlambat</th>
             <th>Pulang Cepat</th>
             {% for c in master_cuti %}
@@ -161,7 +162,7 @@
             <th>Izin Keluar</th>
             <th>Jam Kerja</th>
             <th>Jam Lembur</th>
-            <th>Izin Keluar</th>
+            <th>Jam Keluar</th>
             <th>Total Jam</th>
         </tr>
     </thead>
@@ -172,7 +173,8 @@
             <td class="text-left">{{ row.nik }}</td>
             <td class="text-left">{{ row.nama }}</td>
             <td class="text-left">{{ row.divisi }}</td>
-            <td >{{ row.hadir }}</td>
+            <td>{{ row.hadir }}</td>
+            <td>{{ row.tepat_waktu }}</td>
             <td>{{ row.terlambat }}</td>
             <td>{{ row.pulang_cepat }}</td>
             {% for c in master_cuti %}
