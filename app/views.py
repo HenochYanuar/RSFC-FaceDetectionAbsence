@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from core.decorators.dekstop_only import desktop_only
 from django.core.files.storage import default_storage
 from django.contrib.auth.hashers import make_password
 from django.core.files.base import ContentFile 
@@ -145,6 +146,7 @@ def choose_mode(request):
     else:
         return JsonResponse({"status": "error", "message": "Mode tidak valid"})
 
+@desktop_only
 def absence(request):
     if request.method != 'POST':
         return render(request, 'user/absence.html')
