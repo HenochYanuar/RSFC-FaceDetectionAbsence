@@ -521,7 +521,7 @@ def absence(request):
             'message': f'Error: {str(e)}'
         })
 
-@dekstop_only
+@desktop_only
 def confirm_absence(request):
     from django.utils import timezone
     from datetime import time
