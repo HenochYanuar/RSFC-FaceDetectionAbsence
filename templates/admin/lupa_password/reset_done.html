@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Permintaan Reset Password</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href={% static '/assets/images/rsfc_logo.png' %} type="image/x-icon">
+
+    <style>
+        :root {
+            --primary-color: #75C4EB;
+            --primary-light: #98dbfdff;
+            --primary-dark: #56aedaff;
+            --accent-color: #00BFA5;
+            --background-light: #E8F5E9;
+            --text-color: #5395b7ff;
+            --text-light: #9ecde5ff;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-light) 25%, var(--primary-color) 50%, var(--primary-dark) 75%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .card-reset {
+            max-width: 420px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            background: #fff;
+        }
+
+        .icon-success {
+            width: 80px;
+            height: 80px;
+            background: #e0f2fe;
+            color: #2563eb;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin: 0 auto 20px;
+        }
+
+        .btn-login {
+            margin-top: 20px;
+            padding: 10px 24px;
+            font-weight: 600;
+            border-radius: 8px;
+            background-color: var(--primary-dark);
+            color: #fff;
+        }
+
+        .btn-login:hover {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
+
+        .text-muted {
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card-reset">
+    <div class="icon-success">
+        ✓
+    </div>
+
+    <h4 class="fw-bold mb-3">Permintaan Reset Password</h4>
+
+    <p class="text-muted">
+        Jika email yang Anda masukkan terdaftar di sistem kami,
+        maka link reset password telah dikirim ke email tersebut.
+    </p>
+
+    <p class="text-muted">
+        Silakan periksa <strong>Inbox</strong> atau <strong>Spam</strong>.
+    </p>
+
+    <a href="{% url 'login' %}" class="btn btn-login w-100">
+        Kembali ke Login
+    </a>
+</div>
+
+</body>
+</html>
+

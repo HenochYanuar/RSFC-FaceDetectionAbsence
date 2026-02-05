@@ -59,6 +59,92 @@ def logout(request):
         pass
     return redirect('/admins/login')
 
+def request_reset_password(request):
+    from django.template.loader import render_to_string
+    from django.core.mail import EmailMultiAlternatives
+    from django.conf import settings
+    from datetime import timedelta
+    import secrets
+
+    if request.method == 'POST':
+        email = request.POST.get('email')
+
+        user = Users.objects.filter(email=email).first()
+        if not user:
+            return redirect('reset_password_done')
+
+        token = secrets.token_urlsafe(32)
+
+        PasswordResetToken.objects.create(
+            user=user,
+            token=token,
+            expired_at=timezone.now() + timedelta(minutes=30)
+        )
+
+        reset_link = request.build_absolute_uri(
+            f'/admins/reset-password/{token}/'
+        )
+
+        # Render HTML
+        html_content = render_to_string(
+            'email/reset_password.html',
+            {
+                'user': user,
+                'reset_link': reset_link
+            }
+        )
+
+        # Plain text fallback (WAJIB)
+        text_content = f"""
+Halo {user.name},
+
+Klik link berikut untuk reset password:
+{reset_link}
+
+Link berlaku 30 menit.
+"""
+
+        email_message = EmailMultiAlternatives(
+            subject='Reset Password Akun Anda',
+            body=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user.email],
+        )
+
+        email_message.attach_alternative(html_content, "text/html")
+        email_message.send()
+    
+        return redirect('reset_password_done')
+
+    return render(request, 'admin/lupa_password/formPermintaan.html')
+
+def confirm_reset_password(request, token):
+    reset_token = PasswordResetToken.objects.filter(token=token).first()
+
+    if not reset_token or not reset_token.is_valid():
+        messages.error(request, 'Link reset tidak valid atau kadaluarsa')
+        return redirect('reset_password')
+
+    if request.method == 'POST':
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+
+        if password1 != password2:
+            messages.error(request, 'Password tidak sama')
+            return redirect(request.path)
+
+        user = reset_token.user
+        user.password = make_password(password1)
+        user.save()
+
+        reset_token.is_used = True
+        reset_token.save()
+
+        messages.success(request, 'Password berhasil diubah')
+        return redirect('login')
+
+    return render(request, 'admin/lupa_password/reset_confirm.html')
+
 def err403(request):
     return render(request, 'admin/403.html', status=403)
 

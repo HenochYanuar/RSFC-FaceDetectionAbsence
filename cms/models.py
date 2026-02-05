@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 # Create your models here.
 class MasterDivisions(models.Model):
@@ -67,3 +68,13 @@ class MasterPermission(models.Model):
     max_days = models.IntegerField()
     is_requires_attachment = models.BooleanField(default=False)
     max_per_month = models.IntegerField(null=True, blank=True)
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey('app.Users', on_delete=models.CASCADE)
+    token = models.CharField(max_length=64, unique=True)
+    expired_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_valid(self):
+        return (not self.is_used) and timezone.now() < self.expired_at

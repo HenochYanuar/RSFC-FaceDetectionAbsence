@@ -1,10 +1,18 @@
 from django.contrib.auth import views as auth_views
+from django.views.generic import TemplateView
 from django.urls import path
 from .views import *
 
 urlpatterns = [
     path('login/', login, name='login'),
     path('logout/', logout, name='logout'),
+
+    path('reset_password/', request_reset_password, name='reset_password'),
+    path('reset_password/done/', TemplateView.as_view(
+        template_name='admin/lupa_password/reset_done.html'
+    ), name='reset_password_done'),
+
+    path('reset-password/<str:token>/', confirm_reset_password, name='reset_password_confirm'),
 
     path('dashboard/', dashboard, name='dashboard'),
 
