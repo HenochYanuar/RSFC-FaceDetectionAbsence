@@ -1588,7 +1588,7 @@ def detail_pengajuan_lembur(request, id):
 📢 <b>Pengajuan Lembur Baru</b>
 
 Nama: {user.name}
-Jenis: {lembur.duration_minutes} menit
+Total: {lembur.duration_minutes} menit
 Tanggal: {pesan_tgl_masuk} s.d. {pesan_tgl_pulang}
 Keterangan: {reason}
 
