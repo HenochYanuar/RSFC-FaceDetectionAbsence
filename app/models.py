@@ -17,6 +17,7 @@ class Users(models.Model):
     ],
     default=0
 )
+    telegram_chat_id = models.CharField(max_length=50, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

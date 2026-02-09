@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from core.decorators.dekstop_only import desktop_only
+from core.utils.send_telegram_message import send_telegram_message
 from django.core.files.storage import default_storage
 from django.contrib.auth.hashers import make_password
 from django.core.files.base import ContentFile 
@@ -933,6 +934,22 @@ def pengajuan_cuti(request):
 
         # new_leave_request.save()
 
+        if new_leave_request and boss_obj.telegram_chat_id:
+            message = f"""
+📢 <b>Pengajuan Cuti Baru</b>
+
+Nama: {user.name}
+Jenis: {leave_type_obj.name}
+Tanggal: {start_date} s.d. {end_date}
+Alasan: {reason}
+
+https://s.id/asidewa
+
+Silakan klik tautan di atas dan pilih menu <b>Persetujuan Cuti</b> untuk melakukan approval.
+            """
+
+            send_telegram_message(boss_obj.telegram_chat_id, message)
+
         messages.success(request, 'Pengajuan cuti berhasil diupload.')
         return redirect('/users/pengajuan_cuti')
 
@@ -988,6 +1005,22 @@ def edit_pengajuan_cuti(request, id):
             #    pengajuan.photo = photo_file
 
             pengajuan.save() 
+
+            if pengajuan and boss_obj.telegram_chat_id:
+                message = f"""
+📢 <b>Pengajuan Cuti Baru</b>
+
+Nama: {user.name}
+Jenis: {leave_type_obj.name}
+Tanggal: {start_date} s.d. {end_date}
+Alasan: {reason}
+
+https://s.id/asidewa
+
+Silakan klik tautan di atas dan pilih menu <b>Persetujuan Cuti</b> untuk melakukan approval.
+                """
+
+                send_telegram_message(boss_obj.telegram_chat_id, message)
 
             messages.success(request, 'Data perubahan pengajuan cuti berhasil diupload.')
             return redirect('/users/pengajuan_cuti') 
