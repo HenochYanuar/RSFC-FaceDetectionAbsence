@@ -1,5 +1,5 @@
+from core.utils.send_telegram_message import send_telegram_message, send_telegram_message_hrd
 from .services.permission_service import apply_permission, revert_permission
-from core.utils.send_telegram_message import send_telegram_message_hrd
 from django.contrib.auth.hashers import make_password, check_password
 from django.shortcuts import render, redirect , get_object_or_404
 from .services.leave_service import apply_leave, revert_leave
@@ -1268,9 +1268,25 @@ https://s.id/asidewa
 
 Silakan klik tautan di atas dan pilih menu <b>Persetujuan Cuti</b> untuk melakukan approval.
             """
-                hrd_list = Users.objects.filter(is_admin=2)
+                hrd_list = Users.objects.filter(is_admin=2).exclude(telegram_chat_id=None)
 
                 send_telegram_message_hrd(hrd_list, message)
+
+            if user.is_admin == 2 and new_status != 'Divisi Approved' and pengajuan.nik.telegram_chat_id:
+                message = f"""
+📢 <b>Persetujuan Cuti</b>
+
+Nama: {pengajuan.nik.name}
+Jenis: {pengajuan.leave_type.name}
+Tanggal: {start_date} s.d. {end_date}
+Catatan: {note}
+Status: <b>{new_status}</b>
+
+Silakan check kesesuaian jadwal Anda, dengan hasil pengajuan ini.
+
+<i>Hubungi Unit IT jika terdapat kesalahan.</i>
+            """
+                send_telegram_message(pengajuan.nik.telegram_chat_id, message)
 
             # === APPLY CUTI (HANYA SEKALI) ===
             if (
@@ -1646,9 +1662,25 @@ https://s.id/asidewa
 
 Silakan klik tautan di atas dan pilih menu <b>Persetujuan Izin</b> untuk melakukan approval.
             """
-                hrd_list = Users.objects.filter(is_admin=2)
+                hrd_list = Users.objects.filter(is_admin=2).exclude(telegram_chat_id=None)
 
                 send_telegram_message_hrd(hrd_list, message)
+
+            if user.is_admin == 2 and new_status != 'Divisi Approved' and pengajuan.nik.telegram_chat_id:
+                message = f"""
+📢 <b>Persetujuan Izin</b>
+
+Nama: {pengajuan.nik.name}
+Jenis: {pengajuan.permission_type.name}
+Tanggal: {start_date} s.d. {end_date}
+Catatan: {note}
+Status: <b>{new_status}</b>
+
+Silakan check kesesuaian jadwal Anda, dengan hasil pengajuan ini.
+
+<i>Hubungi Unit IT jika terdapat kesalahan.</i>
+            """
+                send_telegram_message(pengajuan.nik.telegram_chat_id, message)
 
             # === APPLY IZIN ===
             if user.is_admin == 2 and new_status == "Approved" and old_status != "Approved":
@@ -2372,19 +2404,19 @@ def detail_lembur(request, id):
             lembur.approved_at = timezone.now()
             lembur.save()
 
+            import pytz
+            tz_jakarta = pytz.timezone('Asia/Jakarta')
+
+            tgl_masuk_jkt = lembur.start_date.astimezone(tz_jakarta)
+            tgl_pulang_jkt = lembur.end_date.astimezone(tz_jakarta)
+            
+            tgl_masuk_bersih = tgl_masuk_jkt.replace(tzinfo=None)
+            tgl_pulang_bersih = tgl_pulang_jkt.replace(tzinfo=None)
+
+            pesan_tgl_masuk = tgl_masuk_bersih.strftime('%d %b %Y, %H:%M')
+            pesan_tgl_pulang = tgl_pulang_bersih.strftime('%d %b %Y, %H:%M')
+
             if user.is_admin == 1 and  status == 'DIVISI APPROVED':
-                import pytz
-                tz_jakarta = pytz.timezone('Asia/Jakarta')
-
-                tgl_masuk_jkt = lembur.start_date.astimezone(tz_jakarta)
-                tgl_pulang_jkt = lembur.end_date.astimezone(tz_jakarta)
-                
-                tgl_masuk_bersih = tgl_masuk_jkt.replace(tzinfo=None)
-                tgl_pulang_bersih = tgl_pulang_jkt.replace(tzinfo=None)
-
-                pesan_tgl_masuk = tgl_masuk_bersih.strftime('%d %b %Y, %H:%M')
-                pesan_tgl_pulang = tgl_pulang_bersih.strftime('%d %b %Y, %H:%M')
-                
                 message = f"""
 📢 <b>Pengajuan Lembur Baru</b>
 
@@ -2398,9 +2430,25 @@ https://s.id/asidewa
 
 Silakan klik tautan di atas dan pilih menu <b>Persetujuan Lembur</b> untuk melakukan approval.
             """
-                hrd_list = Users.objects.filter(is_admin=2)
+                hrd_list = Users.objects.filter(is_admin=2).exclude(telegram_chat_id=None)
 
                 send_telegram_message_hrd(hrd_list, message)
+
+            if user.is_admin == 2 and status != 'DIVISI APPROVED' and lembur.nik.telegram_chat_id:
+                message = f"""
+📢 <b>Persetujuan Lembur</b>
+
+Nama: {lembur.nik.name}
+Total: {lembur.duration_minutes}  menit
+Tanggal: {pesan_tgl_masuk} s.d. {pesan_tgl_pulang}
+Catatan: {notes}
+Status: <b>{status}</b>
+
+Silakan check data lembur Anda, dengan hasil pengajuan ini.
+
+<i>Hubungi Unit IT jika terdapat kesalahan.</i>
+            """
+                send_telegram_message(lembur.nik.telegram_chat_id, message)
 
             messages.success(request, 'Data persetujuan lembur berhasil disimpan.')
             return redirect('/admins/lembur')
