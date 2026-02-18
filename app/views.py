@@ -1532,8 +1532,8 @@ def timedelta_to_hms(td):
 def pengajuan_lembur(request):
     user = get_object_or_404(Users, nik=request.session.get('nik_id'))
 
-    lembur_list = Overtimes.objects.filter(status='DRAFT').order_by('-overtime_date')
-    done_lembur_list = Overtimes.objects.filter(status__in=['SUBMITTED', 'DIVISI APPROVED', 'APPROVED', 'REJECTED']).order_by('-overtime_date')
+    lembur_list = Overtimes.objects.filter(status__in=['DRAFT', 'SUBMITTED'], nik=user).order_by('-overtime_date')
+    done_lembur_list = Overtimes.objects.filter(status__in=['DIVISI APPROVED', 'APPROVED', 'REJECTED'], nik=user).order_by('-overtime_date')
 
     for lembur in lembur_list:
         second = lembur.duration_minutes * 60 if lembur.end_date != None else 0
