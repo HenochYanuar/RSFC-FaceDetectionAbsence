@@ -23,7 +23,7 @@ class SalaryComponent(models.Model):
 
 
 class UserSalaryComponent(models.Model):
-    user = models.ForeignKey('app.Users', on_delete=models.CASCADE)
+    nik = models.ForeignKey('app.Users', on_delete=models.CASCADE)
     component = models.ForeignKey(SalaryComponent, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     effective_start = models.DateField()
@@ -45,7 +45,7 @@ class UserSalaryComponent(models.Model):
 
 
 class Payroll(models.Model):
-    user = models.ForeignKey('app.Users', on_delete=models.CASCADE)
+    nik = models.ForeignKey('app.Users', on_delete=models.CASCADE)
     period_start = models.DateField()
     period_end = models.DateField()
     total_earning = models.DecimalField(max_digits=14, decimal_places=2)
