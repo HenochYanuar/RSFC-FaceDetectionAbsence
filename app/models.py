@@ -34,6 +34,7 @@ class Admins(models.Model):
 class InAbsences(models.Model):
     id = models.AutoField(primary_key=True)
     nik = models.ForeignKey(Users, on_delete=models.CASCADE)
+    date = models.DateField(db_index=True)
     date_in = models.DateTimeField()
     status_in = models.CharField(max_length=20)
     date_out = models.DateTimeField(null=True, blank=True)
@@ -55,6 +56,14 @@ class InAbsences(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["nik", "date", "shift_order"],
+                name="unique_absence_per_shift"
+            )
+        ]
 
 class OutAbsences(models.Model):
     id = models.AutoField(primary_key=True)

@@ -746,7 +746,9 @@ def save_jadwal(request):
                         date_in__date=local_datetime.date(),
                         status_in="Libur"
                     ).exists():
-                        from datetime import time
+                        from datetime import time, date
+
+                        local_date = date(tahun, bulan, tgl)
 
                         safe_datetime = timezone.make_aware(
                             datetime.combine(date_obj.date(), time(12, 0))
@@ -758,7 +760,9 @@ def save_jadwal(request):
                             date_out=safe_datetime,
                             status_in="Libur",
                             status_out="Libur",
-                            schedule=shift
+                            schedule=shift,
+                            date=local_date,
+                            shift_order=shift_order,
                         )
 
                 mapping_id = f"{user.nik}_{date_str}_{shift_order}"
@@ -870,15 +874,16 @@ def update_jadwal(request):
                         continue
 
                     if shift.name.upper() == "LIBUR":
-                        InAbsences.objects.get_or_create(
+                        InAbsences.objects.update_or_create(
                             nik=user,
-                            date_in=safe_datetime,
+                            date=local_date,
+                            shift_order=shift_order,
                             defaults={
                                 "date_in": safe_datetime,
                                 "date_out": safe_datetime,
                                 "status_in": "Libur",
                                 "status_out": "Libur",
-                                "schedule": shift
+                                "schedule": shift,
                             }
                         )
 
