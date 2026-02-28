@@ -710,76 +710,77 @@ def save_jadwal(request):
     if request.method != "POST":
         return redirect('/admins/mapping_jadwal')
 
-    from datetime import datetime, time
+    from datetime import date, datetime, time
 
     bulan = int(request.POST['bulan'])
     tahun = int(request.POST['tahun'])
 
     _, jumlah_hari = calendar.monthrange(tahun, bulan)
-    tanggal_list = list(range(1, jumlah_hari + 1))
+    tanggal_list = range(1, jumlah_hari + 1)
 
     users = Users.objects.all()
 
     for user in users:
         for tgl in tanggal_list:
-            date_str = f"{tahun}-{bulan:02d}-{tgl:02d}"
+            local_date = date(tahun, bulan, tgl)
 
-            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-            local_datetime = timezone.make_aware(
-                datetime.combine(date_obj.date(), time(0, 0))
+            safe_datetime = timezone.make_aware(
+                datetime.combine(local_date, time(12, 0))
             )
 
             for shift_order in [1, 2]:
-                shift_key = f'shift_{user.nik}_{tgl}_{shift_order}'
+                shift_key = f"shift_{user.nik}_{tgl}_{shift_order}"
                 shift_id = request.POST.get(shift_key)
 
-                if not shift_id:
-                    continue
+                mapping = MappingSchedules.objects.filter(
+                    nik=user,
+                    date=local_date,
+                    shift_order=shift_order
+                ).first()
 
-                shift = MasterSchedules.objects.filter(id=shift_id).first()
-                if not shift:
-                    continue
+                if shift_id:
+                    shift = MasterSchedules.objects.filter(id=shift_id).first()
+                    if not shift_id or shift_id == "-":
+                        if mapping:
+                            mapping.delete()
+                            print(f"Mapping dihapus untuk {user.name} tgl {local_date}")
+                        continue
 
-                if shift.name.lower() == 'libur':
-                    if not InAbsences.objects.filter(
-                        nik=user,
-                        date_in__date=local_datetime.date(),
-                        status_in="Libur"
-                    ).exists():
-                        from datetime import time, date
-
-                        local_date = date(tahun, bulan, tgl)
-
-                        safe_datetime = timezone.make_aware(
-                            datetime.combine(date_obj.date(), time(12, 0))
-                        )
-
-                        InAbsences.objects.create(
+                    if shift.name.upper() == "LIBUR":
+                        InAbsences.objects.update_or_create(
                             nik=user,
-                            date_in=safe_datetime,
-                            date_out=safe_datetime,
-                            status_in="Libur",
-                            status_out="Libur",
-                            schedule=shift,
                             date=local_date,
                             shift_order=shift_order,
+                            defaults={
+                                "date_in": safe_datetime,
+                                "date_out": safe_datetime,
+                                "status_in": "Libur",
+                                "status_out": "Libur",
+                                "schedule": shift,
+                            }
                         )
 
-                mapping_id = f"{user.nik}_{date_str}_{shift_order}"
+                    # ========= UPDATE / CREATE MAPPING =========
+                    if mapping:
+                        mapping.schedule = shift
+                        mapping.save()
+                    else:
+                        MappingSchedules.objects.create(
+                            id=f"{user.nik}_{local_date}_{shift_order}",
+                            nik=user,
+                            date=local_date,
+                            shift_order=shift_order,
+                            schedule=shift
+                        )
 
-                mapping, created = MappingSchedules.objects.get_or_create(
-                    id=mapping_id,
-                    nik=user,
-                    date=local_datetime.date(),
-                    shift_order=shift_order,
-                    defaults={'schedule': shift}
-                )
+                # ===============================
+                # JIKA SHIFT DIKOSONGKAN
+                # ===============================
+                # else:
+                #     if mapping:
+                #         mapping.delete()
 
-                if not created:
-                    mapping.schedule = shift
-                    mapping.save()
-
-    messages.success(request, 'Jadwal karyawan berhasil disimpan.')
+    messages.success(request, "Jadwal karyawan berhasil diperbarui.")
     return redirect('/admins/mapping_jadwal')
 
    
