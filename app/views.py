@@ -397,7 +397,7 @@ def absence(request):
 
             sudah_masuk = InAbsences.objects.filter(
                 nik=user,
-                date_in__range=(start_of_day, end_of_day),
+                date=today,
                 date_in__isnull=False,
             ).exists()
 
@@ -460,8 +460,8 @@ def absence(request):
         for jadwal in jadwal_list:
             sudah_masuk = InAbsences.objects.filter(
                 nik=user,
+                date=today,
                 shift_order=jadwal.shift_order,
-                date_in__range=(start_of_day, end_of_day),
             ).exists()
 
             if not sudah_masuk:
@@ -550,9 +550,12 @@ def confirm_absence(request):
     # ABSEN MASUK NORMAL
     # =====================================================
     if temp["mode"] == "MASUK":
+        time_from_session = datetime.fromisoformat(temp["time"])
+
         InAbsences.objects.create(
             nik_id=temp["user_id"],
-            date_in=temp["time"],
+            date=today,
+            date_in=time_from_session,
             status_in=temp["status_in"],
             schedule_id=temp["schedule_id"],
             shift_order=temp["shift_order"]
@@ -576,6 +579,7 @@ def confirm_absence(request):
                     schedule=schedule,
                     shift_order=shift["shift_order"],
                     date_in=actual_in,
+                    date=today,
                     date_out=planned_out,
                     status_in=shift["status_in"],
                     status_out=None
@@ -590,6 +594,7 @@ def confirm_absence(request):
                     schedule=schedule,
                     shift_order=shift["shift_order"],
                     date_in=planned_in,
+                    date=today,
                     status_in="Tepat Waktu"
                 )
 
