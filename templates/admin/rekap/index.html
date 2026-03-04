@@ -51,7 +51,7 @@
     <div class="card shadow-sm">
         <div class="card-header fw-bold">
             <span>Rekap Kehadiran Karyawan</span>
-            <div class="mt-2">
+            <div class="card-tools">
                 <a href="{% url 'rekap_kehadiran_print' %}?start_date={{ start_date }}&end_date={{ end_date }}&divisi={{ divisi }}"
                     target="_blank"
                     class="btn btn-outline-danger">
@@ -59,9 +59,9 @@
                 </a>
             </div>
         </div>
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover text-center align-middle">
-                <thead class="table-light">
+        <div class="card-body table-responsive p-0">
+            <table class="table table-bordered table-striped table-hover">
+                <thead class="thead-dark">
                     <tr>
                         <th class='col-1'>NIK</th>
                         <th class='col-2'>Nama</th>
