@@ -1745,13 +1745,36 @@ def timedelta_to_hms(td):
 @login_auth
 @admin_required
 @superadmin_required
-def riwayat_keluar (request):
-    from datetime import datetime, timedelta
-    user = get_object_or_404(Users, nik=request.session.get('nik_id'))
+def riwayat_keluar(request):
+    from datetime import date, datetime, time
+    from django.utils.dateparse import parse_date
+
+    user = get_object_or_404(
+        Users,
+        nik=request.session['nik_id']
+    )
 
     divisi = request.GET.get('divisi')
     start = request.GET.get('start')
     end = request.GET.get('end')
+
+    today = date.today()
+
+    start_date = parse_date(start) if start else today.replace(day=1)
+    end_date = parse_date(end) if end else today
+
+    if not start_date:
+        start_date = today.replace(day=1)
+
+    if not end_date:
+        end_date = today
+
+    start_dt = timezone.make_aware(
+        datetime.combine(start_date, time.min)
+    )
+    end_dt = timezone.make_aware(
+        datetime.combine(end_date, time.max)
+    )
 
     qs = (
         OutPermission.objects
@@ -1764,56 +1787,35 @@ def riwayat_keluar (request):
 
     out_active = qs.filter(status='Keluar')
 
-    out_history = qs
+    out_history = qs.filter(
+        time_out__range=(start_dt, end_dt)
+    )
 
-    if start and end:
-        start_dt = timezone.make_aware(
-            datetime.strptime(start, "%Y-%m-%d")
-        )
-        end_dt = timezone.make_aware(
-            datetime.strptime(end, "%Y-%m-%d")
-        ).replace(hour=23, minute=59, second=59)
-
-        out_history = out_history.filter(
-            time_out__range=(start_dt, end_dt)
-        )
-    else:
-        out_history = out_history.filter(
-            time_out__gte=timezone.now() - timedelta(days=31)
-        )
+    now = timezone.now()
 
     for o in out_history:
         if o.time_out and o.time_in:
             delta = o.time_in - o.time_out
             o.duration_minutes = int(delta.total_seconds() // 60)
         elif o.status == 'Keluar':
-            delta = timezone.now() - o.time_out
+            delta = now - o.time_out
             o.duration_minutes = int(delta.total_seconds() // 60)
         else:
             o.duration_minutes = None
 
-    divisi_list = (
-        Users.objects
-        .exclude(divisi__isnull=True)
-        .exclude(divisi__exact='')
-        .values_list('divisi', flat=True)
-        .distinct()
-        .order_by('divisi')
-    )
-
-    return render(request, 'admin/keluar/index.html', {
+    context = {
         'user': user,
         'title': 'Rekap Izin Keluar (Out Permission)',
-
-        'divisi_list': divisi_list,
-
+        'divisi_list': MasterDivisions.objects.all(),
+        'divisi': divisi,
+        'selected_divisi': divisi,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
         'out_active': out_active,
         'out_history': out_history,
+    }
 
-        'selected_divisi': divisi,
-        'start_date': start,
-        'end_date': end,
-    })
+    return render(request, 'admin/keluar/index.html', context)
 
 @login_auth
 @admin_required
@@ -2529,15 +2531,6 @@ def lembur_list(request):
 
         item.total_jam = f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
 
-    divisi_list = (
-        Users.objects
-        .exclude(divisi__isnull=True)
-        .exclude(divisi__exact='')
-        .values_list('divisi', flat=True)
-        .distinct()
-        .order_by('divisi')
-    )
-
     for lembur in lembur_qs:
         user_divisi = MasterDivisions.objects.filter(id=lembur.nik.divisi).first()
         lembur.user_divisi = user_divisi.name if user_divisi else '-'
@@ -2545,7 +2538,8 @@ def lembur_list(request):
     context = {
         'user': user,
         'lembur_list': lembur_qs,
-        'divisi_list': divisi_list,
+        'divisi': divisi,
+        'divisi_list': MasterDivisions.objects.all(),
         'selected_divisi': divisi,
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d'),

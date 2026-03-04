@@ -29,9 +29,9 @@
                         <select name="divisi" class="form-control">
                             <option value="">Semua Divisi</option>
                             {% for d in divisi_list %}
-                                <option value="{{ d }}"
-                                    {% if d == selected_divisi %}selected{% endif %}>
-                                    {{ d }}
+                                <option value="{{ d.id }}"
+                                    {% if d.id|stringformat:"s" == divisi %}selected{% endif %}>
+                                    {{ d.name }}
                                 </option>
                             {% endfor %}
                         </select>
