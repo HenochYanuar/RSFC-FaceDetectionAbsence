@@ -68,6 +68,8 @@ urlpatterns = [
     path('lembur/', lembur, name='lembur'),
     path('lembur/<int:id>/', detail_lembur, name='detail_lembur'),
 
+    path('lembur_list/', lembur_list, name='lembur_list'),
+
     path('err403/', err403, name='err403'),
     path('err404/', err404, name='err404'),
     path('dekstop_only403/', dekstop_only403, name='dekstop_only403')

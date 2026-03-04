@@ -1,0 +1,173 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .header-container {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .logo-cell {
+            width: 80px;
+            text-align: left;
+            padding-left: 5px;
+        }
+
+        .logo-img {
+            width: 70px;
+        }
+
+        .text-cell {
+            text-align: center;
+            padding-right: 100px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .header-sub {
+            font-size: 13px;
+            margin-top: 3px;
+        }
+
+        .line-1 {
+            border: 1px solid black;
+            margin: 2px 0 0 0;
+        }
+
+        .line-2 {
+            border: 2px solid black;
+            margin: 2px 0 10px 0;
+        }
+
+        .header-report-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            margin-top: 5px;
+            font-size: 16px;
+        }
+
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th {
+            padding: 6px;
+            border-bottom: 2px solid #767676;
+            border-top: 2px solid #767676;
+            background: #eaeaea;
+        }
+
+        td {
+            padding: 6px;
+            border: none;
+        }
+
+        .col-no {
+            width: 40px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        @media print {
+            button { display: none; }
+            body { margin: 0; }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-container">
+    <table class="header-table">
+        <tr>
+            <td class="logo-cell">
+                <img src="{% static 'assets/images/rsfc_logo.png' %}" class="logo-img">
+            </td>
+            <td class="text-cell">
+                <div class="header-title">RS Umum Fitri Candra</div>
+                <div class="header-sub">
+                    Jl. Brigjend Katamso, Selogiri, Wonogiri, Jawa Tengah<br>
+                    (0273) 5328899<br>
+                    E-mail : rsb_fitricandra@ymail.com
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <hr class="line-1">
+    <hr class="line-2">
+
+    <div class="header-report-title">{{ title }}</div>
+    <div>
+        Periode {{ start_date }} s/d {{ end_date }}
+        <br>
+        Divisi : {{ selected_divisi|default:"Semua Divisi" }}
+    </div>
+</div>
+
+<button onclick="window.print()">Print Sekarang</button>
+
+<table>
+    <thead>
+        <tr class="text-center">
+            <th class="col-no">No</th>
+            <th>NIK</th>
+            <th>Nama</th>
+            <th>Divisi</th>
+            <th>Tanggal Lembur</th>
+            <th>Jam Mulai</th>
+            <th>Jam Selesai</th>
+            <th>Durasi</th>
+            <th>Alasan</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for item in lembur_list %}
+        <tr class="text-center">
+            <td class="col-no">{{ forloop.counter }}</td>
+            <td class="text-left">{{ item.nik.nik }}</td>
+            <td class="text-left">{{ item.nik.name }}</td>
+            <td class="text-left">{{ item.user_divisi }}</td>
+            <td>{{ item.overtime_date|date:"d-m-Y" }}</td>
+            <td>{{ item.start_date|date:"H:i" }}</td>
+            <td>{{ item.end_date|date:"H:i" }}</td>
+            <td><strong>{{ item.total_jam }}</strong></td>
+            <td class="text-left">{{ item.reason|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9" style="text-align:center;color:gray;">
+                Tidak ada data lembur pada periode ini.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>

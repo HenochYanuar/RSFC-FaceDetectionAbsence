@@ -2481,3 +2481,79 @@ Silakan check data lembur Anda, dengan hasil pengajuan ini.
         'status_choices': status_choices
     }   
     return render(request, 'admin/lembur/detail.html', context)
+
+def lembur_list(request):
+    from datetime import date
+    from django.utils.dateparse import parse_date
+
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
+
+    start_date_param = request.GET.get('start_date')
+    end_date_param = request.GET.get('end_date')
+    divisi = request.GET.get('divisi')
+    is_print = request.GET.get('print')
+
+    today = date.today()
+
+    start_date = parse_date(start_date_param) if start_date_param else today.replace(day=1)
+    end_date = parse_date(end_date_param) if end_date_param else today
+
+    if not start_date:
+        start_date = today.replace(day=1)
+
+    if not end_date:
+        end_date = today
+
+    lembur_qs = (
+        Overtimes.objects
+        .filter(
+            status='APPROVED',
+            overtime_date__range=(start_date, end_date)
+        )
+        .select_related('nik')
+        .order_by('-overtime_date', '-start_date')
+    )
+
+    if divisi:
+        lembur_qs = lembur_qs.filter(nik__divisi=divisi)
+
+    for item in lembur_qs:
+        total_minutes = item.duration_minutes or 0
+        total_seconds = total_minutes * 60
+
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+
+        item.total_jam = f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
+
+    divisi_list = (
+        Users.objects
+        .exclude(divisi__isnull=True)
+        .exclude(divisi__exact='')
+        .values_list('divisi', flat=True)
+        .distinct()
+        .order_by('divisi')
+    )
+
+    for lembur in lembur_qs:
+        user_divisi = MasterDivisions.objects.filter(id=lembur.nik.divisi).first()
+        lembur.user_divisi = user_divisi.name if user_divisi else '-'
+
+    context = {
+        'user': user,
+        'lembur_list': lembur_qs,
+        'divisi_list': divisi_list,
+        'selected_divisi': divisi,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'title': 'Daftar Lembur Karyawan'
+    }
+
+    template_name = (
+        'admin/list_lembur/print.html'
+        if is_print
+        else 'admin/list_lembur/index.html'
+    )
+
+    return render(request, template_name, context)

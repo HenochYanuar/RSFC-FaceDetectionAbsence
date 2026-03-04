@@ -1,0 +1,112 @@
+{% extends "layouts/layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- FILTER CARD -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header fw-bold">
+            Filter Rekap Lembur
+        </div>
+        <div class="card-body">
+            <form method="GET" class="mb-4">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>Dari Tanggal</label>
+                        <input type="date" name="start_date" class="form-control"
+                              value="{{ start_date }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>Sampai Tanggal</label>
+                        <input type="date" name="end_date" class="form-control"
+                              value="{{ end_date }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>Pilih Divisi</label>
+                        <select name="divisi" class="form-control">
+                            <option value="">Semua Divisi</option>
+                            {% for d in divisi_list %}
+                                <option value="{{ d }}"
+                                    {% if d == selected_divisi %}selected{% endif %}>
+                                    {{ d }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary w-100">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Data Rekap Lembur</h3>
+            <div class="card-tools">
+                <a href="?start_date={{ start_date }}&end_date={{ end_date }}&divisi={{ selected_divisi }}&print=1"
+                    target="_blank"
+                    class="btn btn-outline-danger">
+                    <i class="fa fa-print"></i> Cetak
+                </a>
+            </div>
+        </div>
+        <div class="card-body table-responsive p-0">
+            <table class="table table-bordered table-striped table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>No</th>
+                        <th>NIK</th>
+                        <th>Nama</th>
+                        <th>Divisi</th>
+                        <th>Tanggal</th>
+                        <th>Jam Mulai</th>
+                        <th>Jam Selesai</th>
+                        <th>Durasi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% if lembur_list %}
+                    {% for item in lembur_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.nik.nik }}</td>
+                        <td>{{ item.nik.name }}</td>
+                        <td>{{ item.user_divisi }}</td>
+                        <td>{{ item.overtime_date }}</td>
+                        <td>{{ item.start_date|date:"H:i" }}</td>
+                        <td>{{ item.end_date|date:"H:i" }}</td>
+                        <td>
+                            <span class="badge badge-success">
+                                {{ item.total_jam }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            Tidak ada data lembur ditemukan.
+                        </td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer text-right">
+        </div>
+    </div>
+
+</div>
+{% endblock %}
