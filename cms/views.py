@@ -2482,6 +2482,8 @@ Silakan check data lembur Anda, dengan hasil pengajuan ini.
     }   
     return render(request, 'admin/lembur/detail.html', context)
 
+@login_auth
+@admin_required
 def lembur_list(request):
     from datetime import date
     from django.utils.dateparse import parse_date
