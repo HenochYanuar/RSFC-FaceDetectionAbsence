@@ -116,256 +116,256 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column"
-                data-widget="treeview" role="menu" data-accordion="false">
+                data-widget="treeview" role="menu" data-accordion="true">
 
-            {% if user.is_admin == 2 %}
-            <!-- DASHBOARD -->
-            <li class="nav-item">
-                <a href="{% url 'dashboard' %}"
-                  class="nav-link {% is_active 'dashboard' %}">
-                    <i class="nav-icon fas fa-house-user"></i>
-                    <p>Dashboard</p>
-                </a>
-            </li>
-            {% endif %}
-
-
-            {% if user.is_admin != 0 %}
-            <!-- DATA KARYAWAN -->
-            <li class="nav-item has-treeview {% is_open 'karyawan' 'addUser' 'mapping_jadwal' %}">
-                <a href="#"
-                  class="nav-link {% is_active 'karyawan' 'addUser' 'mapping_jadwal' %}">
-                    <i class="nav-icon fa fa-users"></i>
-                    <p>Data Karyawan <i class="right fas fa-angle-left"></i></p>
-                </a>
-                <ul class="nav nav-treeview">
-
-                    {% if user.is_admin == 2 %}
-                    <li class="nav-item">
-                        <a href="{% url 'karyawan' %}"
-                          class="nav-link {% is_active 'karyawan' %}">
-                            <i class="fa fa-list nav-icon"></i>
-                            <p>Daftar Karyawan</p>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{% url 'addUser' %}"
-                          class="nav-link {% is_active 'addUser' %}">
-                            <i class="fas fa-user-plus nav-icon"></i>
-                            <p>Tambah Karyawan</p>
-                        </a>
-                    </li>
-                    {% endif %}
-
-                    <li class="nav-item">
-                        <a href="{% url 'mapping_jadwal' %}"
-                          class="nav-link {% is_active 'mapping_jadwal' %}">
-                            <i class="fa fa-puzzle-piece nav-icon"></i>
-                            <p>Mapping Jadwal</p>
-                        </a>
-                    </li>
-
-                </ul>
-            </li>
-            {% endif %}
+                {% if user.is_admin == 2 %}
+                <!-- DASHBOARD -->
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}"
+                      class="nav-link {% is_active 'dashboard' %}">
+                        <i class="nav-icon fas fa-house-user"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+                {% endif %}
 
 
-            {% if user.is_admin == 2 %}
-            <!-- REKAP DATA -->
-            <li class="nav-item has-treeview {% is_open 'absen' 'lembur_list' 'rekap_kehadiran' 'riwayat_keluar' %}">
-                <a href="#"
-                  class="nav-link {% is_active 'absen' 'lembur_list' 'rekap_kehadiran' 'riwayat_keluar' %}">
-                    <i class="nav-icon fas fa-chart-bar"></i>
-                    <p>Rekap Data <i class="right fas fa-angle-left"></i></p>
-                </a>
-                <ul class="nav nav-treeview">
+                {% if user.is_admin != 0 %}
+                <!-- DATA KARYAWAN -->
+                <li class="nav-item has-treeview {% is_open 'karyawan' 'addUser' 'mapping_jadwal' %}">
+                    <a href="#"
+                      class="nav-link {% is_active 'karyawan' 'addUser' 'mapping_jadwal' %}">
+                        <i class="nav-icon fa fa-users"></i>
+                        <p>Data Karyawan <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
 
-                    <li class="nav-item">
-                        <a href="{% url 'absen' %}"
-                          class="nav-link {% is_active 'absen' %}">
-                            <i class="fa fa-table nav-icon"></i>
-                            <p>Data Presensi</p>
-                        </a>
-                    </li>
+                        {% if user.is_admin == 2 %}
+                        <li class="nav-item">
+                            <a href="{% url 'karyawan' %}"
+                              class="nav-link {% is_active 'karyawan' %}">
+                                <i class="fa fa-list nav-icon"></i>
+                                <p>Daftar Karyawan</p>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a href="{% url 'lembur_list' %}"
-                          class="nav-link {% is_active 'lembur_list' %}">
-                            <i class="far fa-calendar-plus nav-icon"></i>
-                            <p>Data Lembur</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="{% url 'addUser' %}"
+                              class="nav-link {% is_active 'addUser' %}">
+                                <i class="fas fa-user-plus nav-icon"></i>
+                                <p>Tambah Karyawan</p>
+                            </a>
+                        </li>
+                        {% endif %}
 
-                    <li class="nav-item">
-                        <a href="{% url 'rekap_kehadiran' %}"
-                          class="nav-link {% is_active 'rekap_kehadiran' %}">
-                            <i class="fas fa-user-check nav-icon"></i>
-                            <p>Rekap Kehadiran</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="{% url 'mapping_jadwal' %}"
+                              class="nav-link {% is_active 'mapping_jadwal' %}">
+                                <i class="fa fa-puzzle-piece nav-icon"></i>
+                                <p>Mapping Jadwal</p>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a href="{% url 'riwayat_keluar' %}"
-                          class="nav-link {% is_active 'riwayat_keluar' %}">
-                            <i class="fas fa-clipboard-list nav-icon"></i>
-                            <p>Rekap Izin Keluar</p>
-                        </a>
-                    </li>
-
-                </ul>
-            </li>
-            {% endif %}
+                    </ul>
+                </li>
+                {% endif %}
 
 
-            {% if user.is_admin != 0 %}
-            <!-- PERSETUJUAN -->
-            <li class="nav-item has-treeview {% is_open 'persetujuan_cuti' 'persetujuan_izin' 'lembur' %}">
-                <a href="#"
-                  class="nav-link {% is_active 'persetujuan_cuti' 'persetujuan_izin' 'lembur' %}">
-                    <i class="nav-icon fa fa-gavel"></i>
-                    <p>Persetujuan <i class="right fas fa-angle-left"></i></p>
-                </a>
-                <ul class="nav nav-treeview">
+                {% if user.is_admin == 2 %}
+                <!-- REKAP DATA -->
+                <li class="nav-item has-treeview {% is_open 'absen' 'lembur_list' 'rekap_kehadiran' 'riwayat_keluar' %}">
+                    <a href="#"
+                      class="nav-link {% is_active 'absen' 'lembur_list' 'rekap_kehadiran' 'riwayat_keluar' %}">
+                        <i class="nav-icon fas fa-chart-bar"></i>
+                        <p>Rekap Data <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
 
-                    <li class="nav-item">
-                        <a href="{% url 'persetujuan_cuti' %}"
-                          class="nav-link {% is_active 'persetujuan_cuti' %}">
-                            <i class="fa fa-calendar-times nav-icon"></i>
-                            <p>Cuti</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="{% url 'absen' %}"
+                              class="nav-link {% is_active 'absen' %}">
+                                <i class="fa fa-table nav-icon"></i>
+                                <p>Data Presensi</p>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a href="{% url 'persetujuan_izin' %}"
-                          class="nav-link {% is_active 'persetujuan_izin' %}">
-                            <i class="fas fa-clipboard-check nav-icon"></i>
-                            <p>Izin</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="{% url 'lembur_list' %}"
+                              class="nav-link {% is_active 'lembur_list' %}">
+                                <i class="far fa-calendar-plus nav-icon"></i>
+                                <p>Data Lembur</p>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a href="{% url 'lembur' %}"
-                          class="nav-link {% is_active 'lembur' %}">
-                            <i class="far fa-clock nav-icon"></i>
-                            <p>Lembur</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="{% url 'rekap_kehadiran' %}"
+                              class="nav-link {% is_active 'rekap_kehadiran' %}">
+                                <i class="fas fa-user-check nav-icon"></i>
+                                <p>Rekap Kehadiran</p>
+                            </a>
+                        </li>
 
-                </ul>
-            </li>
-            {% endif %}
+                        <li class="nav-item">
+                            <a href="{% url 'riwayat_keluar' %}"
+                              class="nav-link {% is_active 'riwayat_keluar' %}">
+                                <i class="fas fa-clipboard-list nav-icon"></i>
+                                <p>Rekap Izin Keluar</p>
+                            </a>
+                        </li>
 
-
-            <!-- DATA SAYA -->
-            <li class="nav-item has-treeview {% is_open 'jadwal' 'presensi' 'pengajuan_cuti' 'pengajuan_izin' 'pengajuan_lembur' 'keluar_bentar' %}">
-                <a href="#"
-                  class="nav-link {% is_active 'jadwal' 'presensi' 'pengajuan_cuti' 'pengajuan_izin' 'pengajuan_lembur' 'keluar_bentar' %}">
-                    <i class="nav-icon fa fa-user"></i>
-                    <p>Data Saya <i class="right fas fa-angle-left"></i></p>
-                </a>
-                <ul class="nav nav-treeview">
-
-                    <li class="nav-item">
-                        <a href="{% url 'jadwal' %}"
-                          class="nav-link {% is_active 'jadwal' %}">
-                            <i class="fa fa-calendar nav-icon"></i>
-                            <p>Jadwal</p>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{% url 'presensi' %}"
-                          class="nav-link {% is_active 'presensi' %}">
-                            <i class="fa fa-table nav-icon"></i>
-                            <p>Riwayat Presensi</p>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{% url 'pengajuan_cuti' %}"
-                          class="nav-link {% is_active 'pengajuan_cuti' %}">
-                            <i class="fas fa-user-times nav-icon"></i>
-                            <p>Pengajuan Cuti</p>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{% url 'pengajuan_izin' %}"
-                          class="nav-link {% is_active 'pengajuan_izin' %}">
-                            <i class="far fa-hand-paper nav-icon"></i>
-                            <p>Pengajuan Izin</p>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{% url 'pengajuan_lembur' %}"
-                          class="nav-link {% is_active 'pengajuan_lembur' %}">
-                            <i class="fas fa-user-clock nav-icon"></i>
-                            <p>Pengajuan Lembur</p>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a href="{% url 'keluar_bentar' %}"
-                          class="nav-link {% is_active 'keluar_bentar' %}">
-                            <i class="fas fa-door-open nav-icon"></i>
-                            <p>Keluar Bentar</p>
-                        </a>
-                    </li>
-
-                </ul>
-            </li>
+                    </ul>
+                </li>
+                {% endif %}
 
 
-            {% if user.is_admin == 2 %}
-            <!-- MASTER DATA -->
-            <li class="nav-item has-treeview {% is_open 'divisi_master' 'jadwal_master' 'cuti_master' 'izin_master' %}">
-                <a href="#"
-                  class="nav-link {% is_active 'divisi_master' 'jadwal_master' 'cuti_master' 'izin_master' %}">
-                    <i class="nav-icon fa fa-database"></i>
-                    <p>Master Data <i class="right fas fa-angle-left"></i></p>
-                </a>
-                <ul class="nav nav-treeview">
+                {% if user.is_admin != 0 %}
+                <!-- PERSETUJUAN -->
+                <li class="nav-item has-treeview {% is_open 'persetujuan_cuti' 'persetujuan_izin' 'lembur' %}">
+                    <a href="#"
+                      class="nav-link {% is_active 'persetujuan_cuti' 'persetujuan_izin' 'lembur' %}">
+                        <i class="nav-icon fa fa-gavel"></i>
+                        <p>Persetujuan <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
 
-                    <li class="nav-item">
-                        <a href="{% url 'divisi_master' %}"
-                          class="nav-link {% is_active 'divisi_master' %}">
-                            <i class="fa fa-sitemap nav-icon"></i>
-                            <p>Master Divisi</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="{% url 'persetujuan_cuti' %}"
+                              class="nav-link {% is_active 'persetujuan_cuti' %}">
+                                <i class="fa fa-calendar-times nav-icon"></i>
+                                <p>Cuti</p>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a href="{% url 'jadwal_master' %}"
-                          class="nav-link {% is_active 'jadwal_master' %}">
-                            <i class="fa fa-clock nav-icon"></i>
-                            <p>Master Jadwal</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="{% url 'persetujuan_izin' %}"
+                              class="nav-link {% is_active 'persetujuan_izin' %}">
+                                <i class="fas fa-clipboard-check nav-icon"></i>
+                                <p>Izin</p>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a href="{% url 'cuti_master' %}"
-                          class="nav-link {% is_active 'cuti_master' %}">
-                            <i class="fa fa-calendar-times nav-icon"></i>
-                            <p>Master Cuti</p>
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a href="{% url 'lembur' %}"
+                              class="nav-link {% is_active 'lembur' %}">
+                                <i class="far fa-clock nav-icon"></i>
+                                <p>Lembur</p>
+                            </a>
+                        </li>
 
-                    <li class="nav-item">
-                        <a href="{% url 'izin_master' %}"
-                          class="nav-link {% is_active 'izin_master' %}">
-                            <i class="far fa-file-alt nav-icon"></i>
-                            <p>Master Izin</p>
-                        </a>
-                    </li>
+                    </ul>
+                </li>
+                {% endif %}
 
-                </ul>
-            </li>
-            {% endif %}
+
+                <!-- DATA SAYA -->
+                <li class="nav-item has-treeview {% is_open 'jadwal' 'presensi' 'pengajuan_cuti' 'pengajuan_izin' 'pengajuan_lembur' 'keluar_bentar' %}">
+                    <a href="#"
+                      class="nav-link {% is_active 'jadwal' 'presensi' 'pengajuan_cuti' 'pengajuan_izin' 'pengajuan_lembur' 'keluar_bentar' %}">
+                        <i class="nav-icon fa fa-user"></i>
+                        <p>Data Saya <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+
+                        <li class="nav-item">
+                            <a href="{% url 'jadwal' %}"
+                              class="nav-link {% is_active 'jadwal' %}">
+                                <i class="fa fa-calendar nav-icon"></i>
+                                <p>Jadwal</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{% url 'presensi' %}"
+                              class="nav-link {% is_active 'presensi' %}">
+                                <i class="fa fa-table nav-icon"></i>
+                                <p>Riwayat Presensi</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{% url 'pengajuan_cuti' %}"
+                              class="nav-link {% is_active 'pengajuan_cuti' %}">
+                                <i class="fas fa-user-times nav-icon"></i>
+                                <p>Pengajuan Cuti</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{% url 'pengajuan_izin' %}"
+                              class="nav-link {% is_active 'pengajuan_izin' %}">
+                                <i class="far fa-hand-paper nav-icon"></i>
+                                <p>Pengajuan Izin</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{% url 'pengajuan_lembur' %}"
+                              class="nav-link {% is_active 'pengajuan_lembur' %}">
+                                <i class="fas fa-user-clock nav-icon"></i>
+                                <p>Pengajuan Lembur</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{% url 'keluar_bentar' %}"
+                              class="nav-link {% is_active 'keluar_bentar' %}">
+                                <i class="fas fa-door-open nav-icon"></i>
+                                <p>Keluar Bentar</p>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+
+                {% if user.is_admin == 2 %}
+                <!-- MASTER DATA -->
+                <li class="nav-item has-treeview {% is_open 'divisi_master' 'jadwal_master' 'cuti_master' 'izin_master' %}">
+                    <a href="#"
+                      class="nav-link {% is_active 'divisi_master' 'jadwal_master' 'cuti_master' 'izin_master' %}">
+                        <i class="nav-icon fa fa-database"></i>
+                        <p>Master Data <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+
+                        <li class="nav-item">
+                            <a href="{% url 'divisi_master' %}"
+                              class="nav-link {% is_active 'divisi_master' %}">
+                                <i class="fa fa-sitemap nav-icon"></i>
+                                <p>Master Divisi</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{% url 'jadwal_master' %}"
+                              class="nav-link {% is_active 'jadwal_master' %}">
+                                <i class="fa fa-clock nav-icon"></i>
+                                <p>Master Jadwal</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{% url 'cuti_master' %}"
+                              class="nav-link {% is_active 'cuti_master' %}">
+                                <i class="fa fa-calendar-times nav-icon"></i>
+                                <p>Master Cuti</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{% url 'izin_master' %}"
+                              class="nav-link {% is_active 'izin_master' %}">
+                                <i class="far fa-file-alt nav-icon"></i>
+                                <p>Master Izin</p>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+                {% endif %}
 
             </ul>
-            </nav>
+        </nav>
 
       </div>
       <!-- /.sidebar -->
