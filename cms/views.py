@@ -872,6 +872,16 @@ def update_jadwal(request):
                         if mapping:
                             mapping.delete()
                             print(f"Mapping dihapus untuk {user.name} tgl {local_date}")
+
+                            InAbsences.objects.filter(
+                                nik=user,
+                                date=local_date,
+                                shift_order=shift_order,
+                                status_in="Libur",
+                                is_from_leave=False,
+                                is_from_permission=False
+                            ).delete()
+                            
                         continue
 
                     if shift.name.upper() == "LIBUR":
@@ -887,6 +897,15 @@ def update_jadwal(request):
                                 "schedule": shift,
                             }
                         )
+                    else:
+                        InAbsences.objects.filter(
+                            nik=user,
+                            date=local_date,
+                            shift_order=shift_order,
+                            status_in="Libur",
+                            is_from_leave=False,
+                            is_from_permission=False
+                        ).delete()
 
                     if shift.name.upper() == "-":
                         mapping.delete()
