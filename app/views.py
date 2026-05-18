@@ -1590,10 +1590,20 @@ def get_overtime_info(request):
     if not inabs:
         return JsonResponse({'status':'error','message':'Data absen tidak ditemukan untuk tanggal tersebut.'})
 
+    if inabs.is_from_leave:
+        return JsonResponse({'status':'error','message':'Tanggal ini adalah hari cuti, tidak dapat diajukan sebagai lembur.', 'is_leave': True})
+
+    if inabs.is_from_permission:
+        return JsonResponse({'status':'error','message':'Tanggal ini adalah hari izin, tidak dapat diajukan sebagai lembur.', 'is_permission': True})
+
     if not inabs.schedule:
         return JsonResponse({'status':'error','message':'Jadwal tidak tersedia untuk tanggal tersebut.'})
 
     sched = inabs.schedule
+
+    if sched.name == 'Libur':
+        return JsonResponse({'status':'error','message':'Tanggal ini adalah hari libur, tidak dapat diajukan sebagai lembur.', 'is_holiday': True})
+
     start_time = sched.start_time
     end_time = sched.end_time
     scheduled_end_date = target_date
@@ -1648,8 +1658,21 @@ def submit_pengajuan_lembur(request):
         messages.error(request, 'Data absen tidak ditemukan untuk tanggal tersebut.')
         return redirect('pengajuan_lembur')
 
+    if inabs.is_from_leave:
+        messages.error(request, 'Tanggal ini adalah hari cuti, tidak dapat diajukan sebagai lembur.')
+        return redirect('pengajuan_lembur')
+
+    if inabs.is_from_permission:
+        messages.error(request, 'Tanggal ini adalah hari izin, tidak dapat diajukan sebagai lembur.')
+        return redirect('pengajuan_lembur')
+
     if not inabs.schedule or not inabs.date_out:
         messages.error(request, 'Data jadwal atau waktu pulang tidak tersedia untuk tanggal tersebut.')
+        return redirect('pengajuan_lembur')
+
+    sched = inabs.schedule
+    if sched.name == 'Libur':
+        messages.error(request, 'Tanggal ini adalah hari libur, tidak dapat diajukan sebagai lembur.')
         return redirect('pengajuan_lembur')
 
     existing_ot = Overtimes.objects.filter(nik=user, overtime_date=overtime_date).first()

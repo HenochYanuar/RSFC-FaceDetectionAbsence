@@ -258,6 +258,27 @@
               title: 'Sudah Diajukan', 
               text: resp.message
             });
+          } else if(resp.is_leave){
+            $('button[type="submit"]').prop('disabled', true);
+            Swal.fire({
+              icon: 'error', 
+              title: 'Hari Cuti', 
+              text: resp.message
+            });
+          } else if(resp.is_permission){
+            $('button[type="submit"]').prop('disabled', true);
+            Swal.fire({
+              icon: 'error', 
+              title: 'Hari Izin', 
+              text: resp.message
+            });
+          } else if(resp.is_holiday){
+            $('button[type="submit"]').prop('disabled', true);
+            Swal.fire({
+              icon: 'error', 
+              title: 'Hari Libur', 
+              text: resp.message
+            });
           } else {
             Swal.fire({icon: 'info', title: 'Info', text: resp.message});
           }
