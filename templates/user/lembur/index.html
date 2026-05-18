@@ -3,7 +3,58 @@
 
 {% block content %}
 <div class="container-fluid">
+  <div class="card-header py-3">
+    <a href="#" class="btn btn-primary btn float-right" data-toggle="modal" data-target="#lemburModal">
+      <i class="fas fa-plus mr-1"></i> 
+      Ajukan Lembur
+    </a>
+  </div>
 
+  <div class="modal fade" id="lemburModal" tabindex="-1" role="dialog" aria-labelledby="lemburModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form method="post" action="{% url 'submit_pengajuan_lembur' %}">
+          {% csrf_token %}
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="lemburModalLabel">Ajukan Lembur</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="overtime_date">Tanggal</label>
+              <input type="date" class="form-control" id="overtime_date" name="overtime_date" required>
+            </div>
+
+            <div class="form-group">
+              <label for="scheduled_end_time">Jadwal Pulang</label>
+              <input type="text" readonly class="form-control" id="scheduled_end_time" name="scheduled_end_time" placeholder="-">
+            </div>
+
+            <div class="form-group">
+              <label for="actual_out_time">Absen Pulang</label>
+              <input type="text" readonly class="form-control" id="actual_out_time" name="actual_out_time" placeholder="-">
+            </div>
+
+            <div class="form-group">
+              <label for="overtime_duration">Estimasi Lembur</label>
+              <input type="text" readonly class="form-control" id="overtime_duration" name="overtime_duration" placeholder="-">
+            </div>
+
+            <div class="form-group">
+              <label for="keterangan">Keterangan</label>
+              <textarea class="form-control" id="keterangan" name="keterangan" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Kirim</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
   <div class="card mb-5 shadow">
     <div class="card-header py-3">
       <h3 class="card-title mb-2 text-gray-800">Daftar Lembur</h3>
@@ -170,5 +221,53 @@
 {% endif %}
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+  $(document).ready(function(){
+    $('#lemburModal').on('shown.bs.modal', function () {
+      $('#overtime_date').trigger('focus');
+      resetForm();
+    });
+
+    function resetForm(){
+      $('#scheduled_end_time').val('-');
+      $('#actual_out_time').val('-');
+      $('#overtime_duration').val('-');
+      $('#keterangan').val('');
+      $('button[type="submit"]').prop('disabled', false);
+    }
+
+    $('#overtime_date').on('change', function(){
+      var d = $(this).val();
+      if(!d) {
+        resetForm();
+        return;
+      }
+      $.get("{% url 'get_overtime_info' %}", {date: d}, function(resp){
+        if(resp.status === 'success'){
+          $('#scheduled_end_time').val(resp.scheduled_end_time || '-');
+          $('#actual_out_time').val(resp.actual_out_time || '-');
+          $('#overtime_duration').val(resp.overtime_hms || (resp.overtime_minutes ? (Math.floor(resp.overtime_minutes/60)+ ' jam ' + (resp.overtime_minutes%60) + ' menit') : '0 jam 0 menit'));
+          $('button[type="submit"]').prop('disabled', false);
+        } else {
+          resetForm();
+          if(resp.already_submitted){
+            $('button[type="submit"]').prop('disabled', true);
+            Swal.fire({
+              icon: 'warning', 
+              title: 'Sudah Diajukan', 
+              text: resp.message
+            });
+          } else {
+            Swal.fire({icon: 'info', title: 'Info', text: resp.message});
+          }
+        }
+      }, 'json').fail(function(){
+        resetForm();
+        Swal.fire({icon: 'error', title: 'Error', text: 'Gagal mengambil data. Coba lagi.'});
+      });
+    });
+  });
+</script>
 {% endblock %}
 

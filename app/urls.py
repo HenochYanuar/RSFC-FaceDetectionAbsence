@@ -24,5 +24,7 @@ urlpatterns = [
     path('profil/<str:nik>', profile, name='profile'),
 
     path('pengajuan_lembur/', pengajuan_lembur, name='pengajuan_lembur'),
+    path('pengajuan_lembur/info', get_overtime_info, name='get_overtime_info'),
+    path('pengajuan_lembur/submit', submit_pengajuan_lembur, name='submit_pengajuan_lembur'),
     path('pengajuan_lembur/<int:id>', detail_pengajuan_lembur, name='detail_pengajuan_lembur'),
 ]

@@ -1560,6 +1560,124 @@ def pengajuan_lembur(request):
     return render(request, 'user/lembur/index.html', context)
 
 @login_auth
+def get_overtime_info(request):
+    from django.utils import timezone
+    from datetime import datetime, timedelta
+    import pytz
+
+    user = get_object_or_404(Users, nik=request.session.get('nik_id'))
+
+    date_str = request.GET.get('date') or request.POST.get('date')
+    if not date_str:
+        return JsonResponse({'status':'error','message':'Tanggal tidak diberikan.'})
+
+    try:
+        target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except Exception:
+        return JsonResponse({'status':'error','message':'Format tanggal tidak valid.'})
+
+    existing_ot = Overtimes.objects.filter(nik=user, overtime_date=target_date).first()
+    if existing_ot:
+        return JsonResponse({
+            'status':'error',
+            'message':f'Tanggal ini sudah pernah diajukan dengan status {existing_ot.status}.',
+            'already_submitted': True,
+            'existing_id': existing_ot.id
+        })
+
+    inabs = InAbsences.objects.filter(nik=user, date=target_date).order_by('-shift_order').first()
+
+    if not inabs:
+        return JsonResponse({'status':'error','message':'Data absen tidak ditemukan untuk tanggal tersebut.'})
+
+    if not inabs.schedule:
+        return JsonResponse({'status':'error','message':'Jadwal tidak tersedia untuk tanggal tersebut.'})
+
+    sched = inabs.schedule
+    start_time = sched.start_time
+    end_time = sched.end_time
+    scheduled_end_date = target_date
+    if end_time < start_time:
+        scheduled_end_date = target_date + timedelta(days=1)
+
+    tz = pytz.timezone('Asia/Jakarta')
+    scheduled_end_dt = timezone.make_aware(datetime.combine(scheduled_end_date, end_time), tz)
+
+    actual_out = inabs.date_out
+    actual_out_local = timezone.localtime(actual_out) if actual_out else None
+
+    overtime_minutes = 0
+    if actual_out and actual_out > scheduled_end_dt:
+        overtime_minutes = int((actual_out - scheduled_end_dt).total_seconds() // 60)
+
+    return JsonResponse({
+        'status':'success',
+        'scheduled_end': scheduled_end_dt.strftime('%Y-%m-%d %H:%M:%S'),
+        'scheduled_end_time': scheduled_end_dt.strftime('%H:%M'),
+        'actual_out': actual_out_local.strftime('%Y-%m-%d %H:%M:%S') if actual_out_local else None,
+        'actual_out_time': actual_out_local.strftime('%H:%M') if actual_out_local else None,
+        'overtime_minutes': overtime_minutes,
+        'overtime_hms': f"{overtime_minutes//60} jam {overtime_minutes%60} menit"
+    })
+
+
+@login_auth
+def submit_pengajuan_lembur(request):
+    from django.utils import timezone
+    from datetime import datetime
+    import pytz
+
+    user = get_object_or_404(Users, nik=request.session.get('nik_id'))
+
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('pengajuan_lembur')
+
+    overtime_date_str = request.POST.get('overtime_date')
+    reason = request.POST.get('keterangan') or ''
+
+    try:
+        overtime_date = datetime.strptime(overtime_date_str, "%Y-%m-%d").date()
+    except Exception:
+        messages.error(request, 'Tanggal tidak valid.')
+        return redirect('pengajuan_lembur')
+
+    inabs = InAbsences.objects.filter(nik=user, date=overtime_date).order_by('-shift_order').first()
+
+    if not inabs:
+        messages.error(request, 'Data absen tidak ditemukan untuk tanggal tersebut.')
+        return redirect('pengajuan_lembur')
+
+    if not inabs.schedule or not inabs.date_out:
+        messages.error(request, 'Data jadwal atau waktu pulang tidak tersedia untuk tanggal tersebut.')
+        return redirect('pengajuan_lembur')
+
+    existing_ot = Overtimes.objects.filter(nik=user, overtime_date=overtime_date).first()
+    if existing_ot:
+        messages.error(request, f'Tanggal ini sudah pernah diajukan dengan status {existing_ot.status}.')
+        return redirect('pengajuan_lembur')
+
+    tz_jakarta = pytz.timezone('Asia/Jakarta')
+    scheduled_end = timezone.make_aware(datetime.combine(overtime_date, inabs.schedule.end_time), tz_jakarta)
+    actual_out = inabs.date_out
+
+    duration_minutes = int((actual_out - scheduled_end).total_seconds() // 60) if actual_out > scheduled_end else 0
+
+    Overtimes.objects.create(
+        nik=user,
+        overtime_date=overtime_date,
+        start_date=scheduled_end,
+        end_date=actual_out,
+        duration_minutes=duration_minutes,
+        status='DRAFT',
+        reason=reason
+    )
+
+    messages.success(request, 'Pengajuan lembur berhasil dibuat.')
+    return redirect('pengajuan_lembur')
+
+
+@login_auth
 def detail_pengajuan_lembur(request, id):
     user = get_object_or_404(Users, nik=request.session.get('nik_id'))
 
