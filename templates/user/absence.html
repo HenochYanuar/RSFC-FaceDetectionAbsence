@@ -10,6 +10,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href={% static '/assets/styles/absence.css' %}>
+
+    <script>
+        // 1. Cek resolusi layar asli perangkat
+        const isSmallScreen = window.screen.width < 1024;
+        
+        // 2. Cek apakah layar tersebut mengandalkan sentuhan
+        const isTouchDevice = (window.ontouchstart !== undefined) || (navigator.maxTouchPoints > 0);
+
+        // Jika layar kecil ATAU perangkat layar sentuh yang layarnya terlalu sempit
+        if (isSmallScreen || (isSmallScreen && isTouchDevice)) {
+            window.location.replace('/admins/dekstop_only403');
+        }
+    </script>
 </head>
 
 <body>
