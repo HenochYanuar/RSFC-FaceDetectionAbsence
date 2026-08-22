@@ -51,6 +51,12 @@ urlpatterns = [
     path('karyawan/edit/<str:nik>', editKaryawan, name='editKaryawan'),
     path('karyawan/delete/<str:nik>', deleteKaryawan, name='deleteKaryawan'),
 
+    path('kontrak_karyawan/<str:nik>', contract_karyawan, name='contract_karyawan'),
+    path('kontrak_karyawan/<str:nik>/add', add_contract_karyawan, name='add_contract_karyawan'),
+    path('kontrak_karyawan/<str:nik>/<int:id>', contract_detail, name='contract_detail'),
+    path('kontrak_karyawan/<str:nik>/edit/<int:id>', edit_contract_karyawan, name='edit_contract_karyawan'),
+    path('kontrak_karyawan/<str:nik>/delete/<int:id>', delete_contract_karyawan, name='delete_contract_karyawan'),
+
     path('izin/', izin_master, name='izin_master'),
     path('izin/add/', addIzin, name='addIzin'),
     path('izin/edit/<str:id>', editIzin, name='editIzin'),

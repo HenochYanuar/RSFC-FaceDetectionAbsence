@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from utils.image import compress_image
 
@@ -140,3 +141,47 @@ class Overtimes(models.Model):
     notes = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+class TelegramLinkToken(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class EmployeeContract(models.Model):
+
+    CONTRACT_TYPE = (
+        ('PKWT', 'Perjanjian Kerja Waktu Tertentu'),
+        ('PKWTT', 'Perjanjian Kerja Waktu Tidak Tertentu'),
+        ('MAGANG', 'Magang'),
+        ('OUTSOURCE', 'Ahli Daya')
+    )
+
+    CONTRACT_STATUS = (
+        ('ACTIVE', 'Active'),
+        ('EXPIRED', 'Expired'),
+        ('TERMINATED', 'Terminated'),
+        ('PERMANENT', 'Permanent'),
+    )
+
+    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='contracts')
+    contract_number = models.CharField(max_length=50, unique=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    contract_type = models.CharField(max_length=20, choices=CONTRACT_TYPE, default='PKWT')
+    status = models.CharField(max_length=20, choices=CONTRACT_STATUS, default='ACTIVE')
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class ContractNotification(models.Model):
+    contract = models.ForeignKey(EmployeeContract, on_delete=models.CASCADE, related_name='notifications')
+    notification_type = models.CharField(max_length=20,
+        choices=(
+            ('EMPLOYEE', 'Employee'),
+            ('HRD', 'HRD'),
+        )
+    )
+    reminder_day = models.IntegerField()
+    sent_at = models.DateTimeField(auto_now_add=True)

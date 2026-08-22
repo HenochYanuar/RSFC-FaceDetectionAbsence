@@ -1399,6 +1399,160 @@ def karyawan(request):
 
 @login_auth
 @superadmin_required
+def contract_karyawan(request, nik):
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
+
+    karyawan_detail = get_object_or_404(Users, nik=nik)
+    karyawan_contract = EmployeeContract.objects.filter(user_id=karyawan_detail).order_by('-start_date')
+    karyawan_divisi = MasterDivisions.objects.filter(id=karyawan_detail.divisi).first()
+
+    for contract in karyawan_contract:
+        contract.remaining_days = (contract.end_date - timezone.now().date()).days
+
+    context = {
+        'user': user,
+        'karyawan_detail': karyawan_detail,
+        'karyawan_contract': karyawan_contract,
+        'karyawan_divisi': karyawan_divisi,
+        'title': 'Kontrak ' + karyawan_detail.name
+    }
+
+    return render(request, 'admin/kontrak/index.html', context)
+
+@login_auth
+@superadmin_required
+def add_contract_karyawan(request, nik):
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
+    karyawan_detail = get_object_or_404(Users, nik=nik)
+
+    if request.method == 'POST':
+        contract_number = request.POST.get('contract_number')
+        contract_type = request.POST.get('contract_type')
+        status = request.POST.get('status')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        notes = request.POST.get('notes')
+
+        try:
+            contract = EmployeeContract(
+                user_id=karyawan_detail.nik,
+                contract_number=contract_number,
+                contract_type=contract_type,
+                status=status,
+                start_date=start_date,
+                end_date=end_date,
+                notes=notes
+            )
+            contract.save()
+
+            messages.success(request, 'Kontrak karyawan berhasil ditambahkan.')
+            return redirect(f'/admins/kontrak_karyawan/{nik}')
+        
+        except Exception as e:
+            messages.error(request, f'Gagal menambahkan kontrak karyawan: {e}')
+            return redirect(f'/admins/kontrak_karyawan/{nik}/add')
+
+    context = {
+        'user': user,
+        'karyawan_detail': karyawan_detail,
+        'title': 'Tambah Kontrak ' + karyawan_detail.name
+    }
+
+    return render(request, 'admin/kontrak/addForm.html', context)
+
+@login_auth
+@superadmin_required
+def edit_contract_karyawan(request, nik, id):
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
+
+    karyawan_detail = get_object_or_404(Users, nik=nik)
+    contract = get_object_or_404(EmployeeContract, id=id)
+
+    if request.method == 'POST':
+        contract_number = request.POST.get('contract_number')
+        contract_type = request.POST.get('contract_type')
+        status = request.POST.get('status')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        notes = request.POST.get('notes')
+
+        try:
+            contract.contract_number = contract_number
+            contract.contract_type = contract_type
+            contract.status = status
+            contract.start_date = start_date
+            contract.end_date = end_date
+            contract.notes = notes
+
+            contract.save()
+
+            messages.success(request, 'Kontrak karyawan berhasil diupdate.')
+            return redirect(f'/admins/kontrak_karyawan/{nik}')
+        
+        except Exception as e:
+            messages.error(request, f'Gagal mengupdate kontrak karyawan: {e}')
+            return redirect(f'/admins/kontrak_karyawan/{nik}/edit/{id}')
+
+    context = {
+        'user': user,
+        'contract': contract,
+        'karyawan_detail': karyawan_detail,
+        'title': 'Edit Kontrak ' + karyawan_detail.name
+    }
+
+    return render(request, 'admin/kontrak/editForm.html', context)
+
+@login_auth
+@superadmin_required
+def delete_contract_karyawan(request, nik, id):
+    try:
+        contract = get_object_or_404(EmployeeContract, id=id)
+
+        if contract.user_id != nik:
+            messages.error(request, 'Kontrak karyawan tidak ditemukan untuk NIK yang diberikan.')
+            return redirect(f'/admins/kontrak_karyawan/{nik}')
+        
+        contract.delete()
+
+        messages.success(request, 'Kontrak karyawan berhasil dihapus.')
+        return redirect(f'/admins/kontrak_karyawan/{nik}')
+    
+    except Exception as e:
+        messages.error(request, f'Gagal menghapus kontrak karyawan: {e}')
+        return redirect(f'/admins/kontrak_karyawan/{nik}')
+    
+@login_auth
+@superadmin_required
+def contract_detail(request, nik, id):
+
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
+
+    contract = get_object_or_404(EmployeeContract, id=id)
+
+    karyawan_detail = contract.user
+
+    karyawan_divisi = None
+
+    if karyawan_detail.divisi:
+        karyawan_divisi = MasterDivisions.objects.filter(
+            id=karyawan_detail.divisi
+        ).first()
+
+    contract.remaining_days = (contract.end_date - timezone.now().date()).days
+    contract.duration_days = (contract.end_date - contract.start_date).days
+
+    context = {
+        'user': user,
+        'contract': contract,
+        'karyawan_detail': karyawan_detail,
+        'karyawan_divisi': karyawan_divisi,
+        'title': 'Detail Kontrak ' + karyawan_detail.name
+    }
+
+    return render(request, 'admin/kontrak/detail.html', context)
+
+@login_auth
+@superadmin_required
 def detail_karyawan(request, nik):
     user = get_object_or_404(Users, nik=request.session['nik_id'])
 
@@ -2425,6 +2579,29 @@ def detail_lembur(request, id):
         notes = request.POST.get('notes')
 
         try:
+            # update end_date if provided from form (datetime-local string)
+            end_date_str = request.POST.get('end_date')
+            if end_date_str:
+                from datetime import datetime
+                try:
+                    naive_end = datetime.fromisoformat(end_date_str)
+                except Exception:
+                    naive_end = datetime.strptime(end_date_str, '%Y-%m-%dT%H:%M')
+                # determine timezone: prefer start_date tzinfo if available
+                if lembur.start_date and lembur.start_date.tzinfo:
+                    target_tz = lembur.start_date.tzinfo
+                else:
+                    target_tz = timezone.get_current_timezone()
+                if naive_end.tzinfo is None:
+                    end_aware = timezone.make_aware(naive_end, target_tz)
+                else:
+                    end_aware = naive_end.astimezone(target_tz)
+                lembur.end_date = end_aware
+                # recalculate duration_minutes based on new end_date
+                delta = lembur.end_date - lembur.start_date
+                duration_minutes = int(delta.total_seconds() // 60) if delta.total_seconds() > 0 else 0
+                lembur.duration_minutes = duration_minutes
+
             if user.is_admin == 1 and status == 'APPROVED':
                 status = 'DIVISI APPROVED'
 

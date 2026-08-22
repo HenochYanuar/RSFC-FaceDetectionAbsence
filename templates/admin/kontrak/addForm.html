@@ -1,0 +1,234 @@
+{% extends 'layouts/layout.html' %}
+{% load static %}
+{% block content %}
+<div class="wrapper">
+  <div class="content-wrapper" style="margin-left:0 !important;">
+
+    <section class="content">
+
+      <div class="container-fluid">
+
+        <div class="row justify-content-center">
+
+          <div class="col-lg-8">
+
+            <div class="card shadow">
+
+              <div class="card-header">
+
+                <h3 class="card-title">
+                  <i class="fas fa-file-contract"></i>
+                  Tambah Kontrak Karyawan
+                </h3>
+
+              </div>
+
+              <form method="POST" action="{% url 'add_contract_karyawan' nik=user.nik %}">
+
+                {% csrf_token %}
+
+                <div class="card-body">
+
+                  <!-- ======================= -->
+                  <!-- DATA KARYAWAN -->
+                  <!-- ======================= -->
+
+                  <div class="card card-light">
+
+                    <div class="card-header">
+
+                      <h5 class="mb-0">
+                        Informasi Karyawan
+                      </h5>
+
+                    </div>
+
+                    <div class="card-body">
+
+                      <div class="row">
+
+                        <div class="col-md-6">
+
+                          <label>NIK</label>
+
+                          <input type="text" class="form-control" value="{{ user.nik }}" readonly>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                          <label>Nama</label>
+
+                          <input type="text" class="form-control" value="{{ user.name }}" readonly>
+
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                  <br>
+
+                  <!-- ======================= -->
+                  <!-- DATA KONTRAK -->
+                  <!-- ======================= -->
+
+                  <div class="card card-light">
+
+                    <div class="card-header">
+
+                      <h5 class="mb-0">
+                        Informasi Kontrak
+                      </h5>
+
+                    </div>
+
+                    <div class="card-body">
+
+                      <div class="form-group">
+
+                        <label>No. Kontrak</label>
+
+                        <input type="text" class="form-control" name="contract_number"
+                          placeholder="Contoh : PKWT-2026-001" required>
+
+                      </div>
+
+                      <div class="form-row">
+
+                        <div class="form-group col-md-6">
+
+                          <label>Jenis Kontrak</label>
+
+                          <select name="contract_type" class="form-control">
+
+                            <option value="" disabled selected>Pilih Jenis Kontrak</option>
+
+                            <option value="PKWT">PKWT (Perjanjian Kerja Waktu Tertentu)</option>
+
+                            <option value="PKWTT">PKWTT (Perjanjian Kerja Waktu Tidak Tertentu)</option>
+
+                            <option value="MAGANG">MAGANG</option>
+
+                            <option value="OUTSOURCE">OUTSOURCE</option>
+
+                          </select>
+
+                        </div>
+
+                        <div class="form-group col-md-6">
+
+                          <label>Status</label>
+
+                          <select name="status" class="form-control">
+
+                            <option value="" disabled selected>Pilih Status Kontrak</option>
+
+                            <option value="ACTIVE">ACTIVE</option>
+
+                            <option value="PERMANENT">PERMANENT</option>
+
+                            <option value="TERMINATED">TERMINATED</option>
+
+                            <option value="EXPIRED">EXPIRED</option>
+
+                          </select>
+
+                        </div>
+
+                      </div>
+
+                      <div class="form-row">
+
+                        <div class="form-group col-md-6">
+
+                          <label>Tanggal Mulai</label>
+
+                          <input type="date" class="form-control" name="start_date" required>
+
+                        </div>
+
+                        <div class="form-group col-md-6">
+
+                          <label>Tanggal Berakhir</label>
+
+                          <input type="date" class="form-control" name="end_date" required>
+
+                        </div>
+
+                      </div>
+
+                      <div class="form-group">
+
+                        <label>Catatan</label>
+
+                        <textarea name="notes" rows="4" class="form-control"
+                          placeholder="Tambahkan catatan jika diperlukan"></textarea>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <div class="card-footer text-right">
+
+                  <a href="{% url 'contract_karyawan' user.nik %}" class="btn btn-secondary">
+
+                    <i class="fa fa-arrow-left"></i>
+                    Kembali
+
+                  </a>
+
+                  <button type="reset" class="btn btn-warning">
+
+                    <i class="fa fa-redo"></i>
+                    Reset
+
+                  </button>
+
+                  <button type="submit" class="btn btn-primary">
+
+                    <i class="fa fa-save"></i>
+                    Simpan
+
+                  </button>
+
+                </div>
+
+              </form>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{% if messages %}
+<script>
+    {% for message in messages %}
+    Swal.fire({
+        icon: "{{ message.tags }}",  
+        title: "{{ message.tags|capfirst }}",
+        text: "{{ message }}",
+        showConfirmButton: false,
+        timer: 3000
+    });
+    {% endfor %}
+</script>
+{% endif %}
+{% endblock %}
