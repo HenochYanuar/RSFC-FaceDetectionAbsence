@@ -3,6 +3,7 @@ from core.decorators.dekstop_only import desktop_only
 from core.utils.send_telegram_message import send_telegram_message
 from django.core.files.storage import default_storage
 from django.contrib.auth.hashers import make_password
+from django.views.decorators.csrf import csrf_exempt
 from django.core.files.base import ContentFile 
 from datetime import datetime, timedelta
 from cms.decorators import login_auth
@@ -11,15 +12,19 @@ from django.http import JsonResponse
 from django.contrib import messages
 from datetime import date, datetime
 from django.core.cache import cache
+from django.conf import settings
 from cms.models import *
 import face_recognition
 from .models import *
 from PIL import Image
 import numpy as np
 import calendar
+import requests
 import base64
 import pickle
+import json
 import pytz
+import uuid
 import cv2
 import io
 
@@ -524,8 +529,10 @@ def absence(request):
 
 @desktop_only
 def confirm_absence(request):
-    from django.utils import timezone
     from datetime import time
+    from django.db import transaction
+    from django.utils import timezone
+    from .services.contract_notification import check_employee_contract
 
     action = request.POST.get("action")
     temp = request.session.get("pending_absence")
@@ -560,6 +567,12 @@ def confirm_absence(request):
             schedule_id=temp["schedule_id"],
             shift_order=temp["shift_order"]
         )
+
+        transaction.on_commit(
+            lambda: check_employee_contract(temp["user_id"])
+        )
+
+        print(f'temp["user_id"]: {temp["user_id"]}')
 
     # =====================================================
     # ABSEN MASUK LONG SHIFT
@@ -597,6 +610,10 @@ def confirm_absence(request):
                     date=today,
                     status_in="Tepat Waktu"
                 )
+
+        transaction.on_commit(
+            lambda: check_employee_contract(temp["user_id"])
+        )
 
     # =====================================================
     # ABSEN PULANG NORMAL
@@ -1183,17 +1200,11 @@ def profile(request, nik):
     detail_user = get_object_or_404(Users, nik=nik)
 
     if request.method == 'POST':
-        name = request.POST.get('name')
         email = request.POST.get('email')
-        divisi = request.POST.get('divisi')
         password_baru = request.POST.get('password')
-        telegram_chat_id = request.POST.get('telegram_chat_id')
         
         try:
-            detail_user.name = name
             detail_user.email = email
-            detail_user.divisi = divisi
-            detail_user.telegram_chat_id = telegram_chat_id
 
             if password_baru:
                 detail_user.password = make_password(password_baru)
@@ -1223,6 +1234,80 @@ def profile(request, nik):
     }
 
     return render(request, 'user/profile/index.html', context)
+
+@login_auth
+def connect_telegram(request):
+    user = get_object_or_404(Users, nik=request.session.get('nik_id'))
+
+    token = TelegramLinkToken.objects.create(
+        user=user
+    )
+
+    bot_username = "asidewarsfc_bot"
+
+    return redirect(
+        f"https://t.me/{bot_username}?start={token.token}"
+    )
+
+@csrf_exempt
+def telegram_webhook(request):
+
+    data = json.loads(request.body)
+
+    message = data.get("message", {})
+    text = message.get("text", "")
+    chat_id = message.get("chat", {}).get("id")
+
+    if text.startswith("/start"):
+
+        parts = text.split()
+
+        if len(parts) == 2:
+
+            token_value = parts[1]
+
+            try:
+                uuid.UUID(token_value)
+            except ValueError:
+                return JsonResponse({"ok": True})
+
+            token = TelegramLinkToken.objects.filter(
+                token=token_value,
+                is_used=False
+            ).first()
+
+            if token:
+
+                user = token.user
+
+                user.telegram_chat_id = str(chat_id)
+                user.save()
+
+                token.is_used = True
+                token.save()
+
+                message = f"""
+✅ <b>BERHASIL</b>
+
+Halo <b>{user.name}</b> 👋
+
+Akun Telegram Anda berhasil ditautkan ke sistem absensi <b>ASI DEWA</b>.
+
+🆔 NIK: <b><code>{user.nik}</code></b>
+
+ℹ️ <em>Silakan kembali ke halaman profil kemudian refresh halaman tersebut.</em>
+"""
+
+                requests.post(
+                    f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
+                    json={
+                        "chat_id": chat_id,
+                        "text": message,
+                        "parse_mode": "HTML"
+                    }
+                )
+
+    return JsonResponse({"ok": True})
 
 @login_auth
 def pengajuan_izin(request):

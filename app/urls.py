@@ -23,6 +23,9 @@ urlpatterns = [
 
     path('profil/<str:nik>', profile, name='profile'),
 
+    path('telegram/connect/', connect_telegram,name='connect_telegram'),
+    path('telegram/webhook/', telegram_webhook, name="telegram_webhook"),
+
     path('pengajuan_lembur/', pengajuan_lembur, name='pengajuan_lembur'),
     path('pengajuan_lembur/info', get_overtime_info, name='get_overtime_info'),
     path('pengajuan_lembur/submit', submit_pengajuan_lembur, name='submit_pengajuan_lembur'),

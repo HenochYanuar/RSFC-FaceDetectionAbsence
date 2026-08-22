@@ -7,92 +7,150 @@
             
             <div class="card shadow-lg border-0">
                 <div class="card-header bg-warning text-dark py-3">
-                    <h4 class="mb-0"><i class="fas fa-pencil-alt me-2"></i> {{ detail_user.name }}</h4>
+                    <h4 class="mb-0"><i class="fas fa-user-circle me-2"></i> {{ detail_user.name }}</h4>
                 </div>
                 
                 <div class="card-body p-4">
-                    
-                    <form method="POST" enctype="multipart/form-data" action="{% url 'profile' detail_user.nik %}">
-                        {% csrf_token %}
+                    <div class="row">
                         
-                        <div class="row">
-                            <div class="col-md-5 text-center border-end">
-                                
-                                <h5 class="text-primary mb-3">Foto Profil</h5>
-                                <img src="{{ detail_user.photo.url }}" alt="Foto Profil Saat Ini" 
-                                     class="profile-photo mb-3" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 3px solid #ccc;">
-
-                                <div class="mb-3">
-                                    <small class="form-text text-muted">Foto tidak bisa diubah kecuali terdapat ketidakcocokan data saat melakukan presensi.</small>
-                                    <small class="form-text text-danger">Minta tolong Mas Lexca untuk penyesuaian foto.</small>
-                                    
-                                </div>
-                                
-                                <hr class="my-4 d-md-none">
+                        <!-- ==========================================
+                             KOLOM KIRI: TAMPILAN DATA STATIS 
+                             ========================================== -->
+                        <div class="col-md-5 text-center border-end pe-md-4 mb-4 mb-md-0">
+                            <h5 class="text-primary mb-3">Foto Profil</h5>
+                            <img src="{{ detail_user.photo.url }}" alt="Foto Profil Saat Ini" 
+                                 class="profile-photo mb-3 shadow-sm" 
+                                 style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 3px solid #dee2e6;">
+                            
+                            <div class="mb-4 text-start">
+                                <small class="form-text text-muted d-block text-center mb-1">Foto tidak bisa diubah kecuali terdapat ketidakcocokan data saat melakukan presensi.</small>
+                                <small class="form-text text-danger d-block text-center">
+                                    <i class="fas fa-info-circle"></i> Hubungi Mas Lexca untuk penyesuaian foto.
+                                </small>
                             </div>
 
-                            <div class="col-md-7">
+                           
+
+                            
+
+                        </div>
+
+                        <!-- ==========================================
+                             KOLOM KANAN: FORM UPDATE & INTEGRASI
+                             ========================================== -->
+                        <div class="col-md-7 ps-md-4">
+
+                            <h5 class="text-primary mb-3 text-start">Data Pribadi</h5>
+                            
+                            <dl class="row text-start mb-0">
+                                <dt class="col-sm-4 text-muted fw-normal mb-2">NIK</dt>
+                                <dd class="col-sm-8 fw-bold mb-3">{{ detail_user.nik }}</dd>
+
+                                <dt class="col-sm-4 text-muted fw-normal mb-2">Nama</dt>
+                                <dd class="col-sm-8 fw-bold mb-3">{{ detail_user.name }}</dd>
+
+                                <dt class="col-sm-4 text-muted fw-normal mb-2">Divisi</dt>
+                                <dd class="col-sm-8 fw-bold mb-3">{{ division_detail.name }}</dd>
+
+                                <dt class="col-sm-4 text-muted fw-normal mb-2">Status Akun</dt>
+                                <dd class="col-sm-8 fw-bold mb-0">
+                                    {% if detail_user.is_admin == 2 %}
+                                        <span class="text-success" style="font-size: 15px;">Administrator (Super User)</span>
+                                    {% elif detail_user.is_admin == 1 %}
+                                        <span class="text-info" style="font-size: 15px;">Penanggung Jawab Divisi (Admin Divisi)</span>
+                                    {% else %}
+                                        <span class="text-secondary" style="font-size: 15px;">User (Non Administrator)</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+
+                            <hr class="my-4">
+                            
+                            <h5 class="text-primary mb-3">Pengaturan Akun</h5>
+                            
+                            <!-- FORM: Tanpa enctype="multipart/form-data" -->
+                            <form method="POST" action="{% url 'profile' detail_user.nik %}" class="mb-5">
+                                {% csrf_token %}
                                 
-                                <h5 class="text-primary mb-3">Data Pribadi</h5>
-
-                                <div class="mb-3">
-                                    <label for="id_nik" class="form-label">NIK</label>
-                                    <input type="text" class="form-control" id="id_nik" name="nik" 
-                                           value="{{ detail_user.nik }}" readonly>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="id_name" class="form-label">Nama Lengkap</label>
-                                    <input type="text" class="form-control" id="id_name" name="name" 
-                                           value="{{ detail_user.name }}" required readonly>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="id_divisi" class="form-label">Divisi</label>
-                                    <select class="form-control" id="id_divisi" name="divisi" required readonly>
-                                        <option value="{{ division_detail.id }}" selected>{{ division_detail.name }}</option>
-                                    </select>
-                                </div>
-
-                                <hr class="my-4">
-
-                                <h5 class="text-primary mb-3">Data Kontak</h5>
-
                                 <div class="mb-3">
                                     <label for="id_email" class="form-label">Email</label>
                                     <input type="email" class="form-control" id="id_email" name="email" 
                                            value="{{ detail_user.email }}" required>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="telegram_chat_id" class="form-label">Telegram Chat ID</label>
-                                    <input type="text" class="form-control" id="telegram_chat_id" name="telegram_chat_id" 
-                                           value="{{ detail_user.telegram_chat_id }}">
-                                </div>
-
-                                <hr class="my-4">
-
-                                <h5 class="text-primary mb-3">Pengaturan Akun</h5>
-                                <div class="mb-3">
+                                <div class="mb-4">
                                     <label for="id_password" class="form-label">Password Baru</label>
                                     <input type="password" class="form-control" id="id_password" name="password" 
                                            placeholder="Kosongkan jika tidak ingin mengganti password">
-                                    <small class="form-text text-danger">Isi hanya jika Anda ingin mengubah password.</small>
+                                    <small class="form-text text-danger"><i class="fas fa-info-circle"></i> Isi hanya jika Anda ingin mengubah password.</small>
                                 </div>
-                            </div>
-                        </div>
 
-                        <hr class="mt-4 mb-4">
-                        
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-success me-3">
-                                <i class="fas fa-save me-1"></i> Simpan 
-                            </button>
-                            <a href="{% url 'jadwal' %}" class="btn btn-danger">
-                                <i class="fas fa-times me-1"></i> Batal
-                            </a>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-save me-1"></i> Simpan
+                                    </button>
+                                    {% comment %} <a href="{% url 'jadwal' %}" class="btn btn-outline-danger">Batal</a> {% endcomment %}
+                                </div>
+                            </form>
+
+                            <hr class="my-4">
+
+                            <!-- INTEGRASI TELEGRAM -->
+                            <h5 class="text-primary mb-3">
+                                <i class="fab fa-telegram text-info me-2"></i> Integrasi Telegram
+                            </h5>
+
+                            <script>
+                                function checkUnsavedChanges(event, url) {
+                                    let isChanged = document.getElementById('id_email').defaultValue !== document.getElementById('id_email').value || 
+                                                    document.getElementById('id_password').value !== "";
+                                    if (isChanged) {
+                                        event.preventDefault();
+                                        Swal.fire({
+                                            icon: 'warning',
+                                            title: 'Data Belum Disimpan!',
+                                            text: 'Simpan perubahan profil Anda (Email/Password) terlebih dahulu sebelum menghubungkan Telegram.',
+                                            confirmButtonText: 'Mengerti',
+                                            confirmButtonColor: '#198754'
+                                        });
+                                    }
+                                }
+                            </script>
+
+                            {% if detail_user.telegram_chat_id %}
+                            <div class="text-light alert alert-success d-flex align-items-center justify-content-between border-0 shadow-sm rounded-3 p-3 mb-0">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-light text-success rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 45px; height: 45px;">
+                                        <i class="fas fa-check fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">Terhubung</h6>
+                                        <small>Chat ID: {{ detail_user.telegram_chat_id }}</small>
+                                    </div>
+                                </div>
+                                <a href="{% url 'connect_telegram' %}" target="_blank" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold" onclick="checkUnsavedChanges(event, this.href)">
+                                    <i class="fas fa-sync-alt me-1"></i> Perbarui
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-secondary d-flex flex-column flex-md-row align-items-md-center justify-content-between border-0 shadow-sm rounded-3 p-3 mb-0 bg-light">
+                                <div class="d-flex align-items-center mb-3 mb-md-0">
+                                    <div class="bg-white text-info rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 45px; height: 45px;">
+                                        <i class="fab fa-telegram-plane fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 fw-bold text-dark">Belum Terhubung</h6>
+                                        <small class="text-muted d-block" style="line-height: 1.2;">Dapatkan notifikasi dari ASI DEWA langsung ke Telegram Anda.</small>
+                                    </div>
+                                </div>
+                                <a href="{% url 'connect_telegram' %}" target="_blank" class="btn btn-info text-white btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm" onclick="checkUnsavedChanges(event, this.href)">
+                                    Hubungkan Sekarang <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                            {% endif %}
+                            
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
 
