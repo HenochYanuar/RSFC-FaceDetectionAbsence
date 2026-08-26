@@ -115,7 +115,7 @@ def send_contract_reminder(contract, remaining_days, reminder_day):
     # ==========================
 
     hrd_users = Users.objects.filter(
-        is_admin__in=[1, 2],
+        is_admin__in=[2],
         telegram_chat_id__isnull=False
     ).exclude(
         telegram_chat_id=''
