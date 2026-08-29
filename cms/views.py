@@ -47,9 +47,9 @@ def login(request):
         if user.is_admin == 2:
             return redirect('/admins/dashboard')
         elif user.is_admin == 1:
-            return redirect('/admins/mapping_jadwal')
+            return redirect('/admins/dashboard')
         else:
-            return redirect('/users/jadwal')
+            return redirect('/admins/dashboard')
 
     return render(request, 'admin/login.html')
 
@@ -155,132 +155,312 @@ def err404(request, exception, template_name='admin/404.html'):
 def dekstop_only403(request):
     return render(request, 'admin/dekstop_only403.html', status=403)
 
-@login_auth 
-@admin_required
-@superadmin_required
-def dashboard(request):
-    user = get_object_or_404(Users, nik=request.session['nik_id'])
-    from datetime import datetime, time
+# @login_auth 
+# @admin_required
+# @superadmin_required
+# def dashboard(request):
+#     user = get_object_or_404(Users, nik=request.session['nik_id'])
+#     from datetime import datetime, time
     
+#     today = timezone.now().date()
+
+#     start = timezone.make_aware(
+#         datetime.combine(today, time.min)
+#     )
+
+#     end = timezone.make_aware(
+#         datetime.combine(today, time.max)
+#     )
+
+#     filter_status = request.GET.get("status")
+
+#     total_karyawan = Users.objects.count()
+
+#     total_jadwal = MappingSchedules.objects.filter(date=today).count()
+
+#     hadir_hari_ini = InAbsences.objects.filter(
+#         date_in__range=(start, end),
+#         status_in__in=["Tepat Waktu", "Terlambat"]
+#     ).count()
+
+#     tepat_waktu_hari_ini = InAbsences.objects.filter(
+#         date_in__range=(start, end),
+#         status_in="Tepat Waktu"
+#     ).count()
+
+#     terlamabt_hari_ini = InAbsences.objects.filter(
+#         date_in__range=(start, end),
+#         status_in="Terlambat"
+#     ).count()
+    
+#     cuti_hari_ini = InAbsences.objects.filter(
+#         date_in__range=(start, end),
+#         status_in="Cuti"
+#     ).count()
+    
+#     libur_hari_ini = InAbsences.objects.filter(
+#         date_in__range=(start, end),
+#         status_in="Libur"
+#     ).count()
+
+#     izin_hari_ini = InAbsences.objects.filter(
+#         date_in__range=(start, end),
+#         status_in="Izin"
+#     ).count()
+
+#     belum_hadir = total_jadwal - hadir_hari_ini - libur_hari_ini
+
+#     # Grafik 7 hari
+#     labels_7_hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
+#     data_7_hari = []
+
+#     for i in range(7):
+#         tanggal = today - timezone.timedelta(days=i)
+#         jumlah = InAbsences.objects.filter(date_in__date=tanggal).count()
+#         data_7_hari.append(jumlah)
+
+#     data_7_hari.reverse()
+
+#     from django.db.models import OuterRef, Subquery, DateTimeField
+
+#     # Tabel presensi hari ini
+#     absence_qs = (
+#         InAbsences.objects
+#         .filter(
+#             nik=OuterRef("nik"),
+#             schedule=OuterRef("schedule"),
+#             date_in__range=(start, end)
+#         )
+#         .order_by("date_in")
+#     )
+
+#     status_subquery = absence_qs.values("status_in")[:1]
+
+#     jam_masuk_subquery = absence_qs.values("date_in")[:1]
+
+#     presensi_hari_ini = (
+#         MappingSchedules.objects
+#         .select_related("nik", "schedule")
+#         .annotate(
+#             status_masuk=Subquery(status_subquery),
+#             jam_masuk=Subquery(
+#                 jam_masuk_subquery,
+#                 output_field=DateTimeField()
+#             )
+#         )
+#         .filter(date=today)
+#     )
+
+#     if filter_status:
+#         if filter_status == "Belum Hadir":
+#             presensi_hari_ini = presensi_hari_ini.filter(status_masuk__isnull=True)
+#         elif filter_status == "Hadir":
+#             presensi_hari_ini = presensi_hari_ini.filter(status_masuk__isnull=False)
+#         elif filter_status == "Semua":
+#             presensi_hari_ini = presensi_hari_ini.all()
+#         else:
+#             presensi_hari_ini = presensi_hari_ini.filter(status_masuk=filter_status)
+
+#     presensi_hari_ini = presensi_hari_ini.order_by("nik__name")
+
+#     context = {
+#         'user': user,
+#         'title': 'Dahsboard Admin',
+#         "total_jadwal": total_jadwal,
+#         "tepat_waktu_hari_ini": tepat_waktu_hari_ini,
+#         "terlamabt_hari_ini": terlamabt_hari_ini,
+#         "cuti_hari_ini": cuti_hari_ini,
+#         "libur_hari_ini": libur_hari_ini,
+#         "izin_hari_ini": izin_hari_ini,
+#         "total_karyawan": total_karyawan,
+#         "hadir_hari_ini": hadir_hari_ini,
+#         "belum_hadir": belum_hadir,
+#         "labels_7_hari": labels_7_hari,
+#         "data_7_hari": data_7_hari,
+#         "presensi_hari_ini": presensi_hari_ini,
+#         "filter_status": filter_status
+#     }
+
+#     return render(request, "admin/dashboard.html", context)
+
+@login_auth
+def dashboard(request):
+    from datetime import datetime, time
+    from django.db.models import OuterRef, Subquery, DateTimeField, Count, Q
+    from django.shortcuts import get_object_or_404, render
+    from django.utils import timezone
+
+    user = get_object_or_404(Users, nik=request.session['nik_id'])
+
+    is_admin_or_hrd = user.is_admin == 2 
+ 
     today = timezone.now().date()
-
-    start = timezone.make_aware(
-        datetime.combine(today, time.min)
-    )
-
-    end = timezone.make_aware(
-        datetime.combine(today, time.max)
-    )
-
+    start = timezone.make_aware(datetime.combine(today, time.min))
+    end = timezone.make_aware(datetime.combine(today, time.max))
     filter_status = request.GET.get("status")
 
-    total_karyawan = Users.objects.count()
-
-    total_jadwal = MappingSchedules.objects.filter(date=today).count()
-
-    hadir_hari_ini = InAbsences.objects.filter(
-        date_in__range=(start, end),
-        status_in__in=["Tepat Waktu", "Terlambat"]
-    ).count()
-
-    tepat_waktu_hari_ini = InAbsences.objects.filter(
-        date_in__range=(start, end),
-        status_in="Tepat Waktu"
-    ).count()
-
-    terlamabt_hari_ini = InAbsences.objects.filter(
-        date_in__range=(start, end),
-        status_in="Terlambat"
-    ).count()
-    
-    cuti_hari_ini = InAbsences.objects.filter(
-        date_in__range=(start, end),
-        status_in="Cuti"
-    ).count()
-    
-    libur_hari_ini = InAbsences.objects.filter(
-        date_in__range=(start, end),
-        status_in="Libur"
-    ).count()
-
-    izin_hari_ini = InAbsences.objects.filter(
-        date_in__range=(start, end),
-        status_in="Izin"
-    ).count()
-
-    belum_hadir = total_jadwal - hadir_hari_ini - libur_hari_ini
-
-    # Grafik 7 hari
-    labels_7_hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
-    data_7_hari = []
-
-    for i in range(7):
-        tanggal = today - timezone.timedelta(days=i)
-        jumlah = InAbsences.objects.filter(date_in__date=tanggal).count()
-        data_7_hari.append(jumlah)
-
-    data_7_hari.reverse()
-
-    from django.db.models import OuterRef, Subquery, DateTimeField
-
-    # Tabel presensi hari ini
-    absence_qs = (
-        InAbsences.objects
-        .filter(
-            nik=OuterRef("nik"),
-            schedule=OuterRef("schedule"),
-            date_in__range=(start, end)
-        )
-        .order_by("date_in")
-    )
-
-    status_subquery = absence_qs.values("status_in")[:1]
-
-    jam_masuk_subquery = absence_qs.values("date_in")[:1]
-
-    presensi_hari_ini = (
+    # DASHBOARD SAYA
+    jadwal_saya_hari_ini = (
         MappingSchedules.objects
-        .select_related("nik", "schedule")
-        .annotate(
-            status_masuk=Subquery(status_subquery),
-            jam_masuk=Subquery(
-                jam_masuk_subquery,
-                output_field=DateTimeField()
-            )
-        )
-        .filter(date=today)
+        .select_related('schedule')
+        .filter(nik=user, date=today)
+        .first()
     )
 
-    if filter_status:
-        if filter_status == "Belum Hadir":
-            presensi_hari_ini = presensi_hari_ini.filter(status_masuk__isnull=True)
-        elif filter_status == "Hadir":
-            presensi_hari_ini = presensi_hari_ini.filter(status_masuk__isnull=False)
-        elif filter_status == "Semua":
-            presensi_hari_ini = presensi_hari_ini.all()
-        else:
-            presensi_hari_ini = presensi_hari_ini.filter(status_masuk=filter_status)
+    jadwal_saya_besok = (
+        MappingSchedules.objects
+        .select_related('schedule')
+        .filter(nik=user, date=today + timezone.timedelta(days=1))
+        .first()
+    )
+ 
+    absen_saya_hari_ini = (
+        InAbsences.objects
+        .filter(nik=user, date_in__range=(start, end))
+        .order_by('date_in')
+        .first()
+    )
+ 
+    if absen_saya_hari_ini:
+        status_saya_hari_ini = absen_saya_hari_ini.status_in
+        jam_datang_saya = absen_saya_hari_ini.date_in
+    elif jadwal_saya_hari_ini:
+        status_saya_hari_ini = "Belum Hadir"
+        jam_datang_saya = None
+    else:
+        status_saya_hari_ini = "Tidak ada jadwal untuk hari ini"
+        jam_datang_saya = None
+ 
+    awal_bulan = today.replace(day=1)
 
-    presensi_hari_ini = presensi_hari_ini.order_by("nik__name")
+    rekap_bulanan_saya = InAbsences.objects.filter(
+        nik=user,
+        date__gte=awal_bulan,
+        date__lte=today,
+    ).aggregate(
+        tepat_waktu=Count('id', filter=Q(status_in='Tepat Waktu')),
+        terlambat=Count('id', filter=Q(status_in='Terlambat')),
+        izin=Count('id', filter=Q(status_in='Izin')),
+        cuti=Count('id', filter=Q(status_in='Cuti')),
+        libur=Count('id', filter=Q(status_in='Libur')),
+    )
+ 
+    total_hadir_bulan_ini = rekap_bulanan_saya['tepat_waktu'] + rekap_bulanan_saya['terlambat'] + rekap_bulanan_saya['cuti'] + rekap_bulanan_saya['libur']
+ 
+    total_jadwal_bulan_ini = MappingSchedules.objects.filter(
+        nik=user, date__gte=awal_bulan, date__lte=today
+    ).count()
+ 
+    persentase_kehadiran = (
+        round((total_hadir_bulan_ini / total_jadwal_bulan_ini) * 100, 1)
+        if total_jadwal_bulan_ini else 0
+    )
+
+    kontrak_saya = EmployeeContract.objects.filter(user=user).order_by('-end_date').first()
+
+    sisa_kontrak = 0
+    if kontrak_saya:
+        sisa_kontrak = (kontrak_saya.end_date - today).days
+        if sisa_kontrak < 0:
+            sisa_kontrak = 0
 
     context = {
         'user': user,
-        'title': 'Dahsboard Admin',
-        "total_jadwal": total_jadwal,
-        "tepat_waktu_hari_ini": tepat_waktu_hari_ini,
-        "terlamabt_hari_ini": terlamabt_hari_ini,
-        "cuti_hari_ini": cuti_hari_ini,
-        "libur_hari_ini": libur_hari_ini,
-        "izin_hari_ini": izin_hari_ini,
-        "total_karyawan": total_karyawan,
-        "hadir_hari_ini": hadir_hari_ini,
-        "belum_hadir": belum_hadir,
-        "labels_7_hari": labels_7_hari,
-        "data_7_hari": data_7_hari,
-        "presensi_hari_ini": presensi_hari_ini,
-        "filter_status": filter_status
+        'title': 'Dashboard',
+        'is_admin_or_hrd': is_admin_or_hrd,
+        'filter_status': filter_status,
+ 
+        'jadwal_saya_hari_ini': jadwal_saya_hari_ini,
+        'jadwal_saya_besok': jadwal_saya_besok,
+        'status_saya_hari_ini': status_saya_hari_ini,
+        'jam_datang_saya': jam_datang_saya,
+        'rekap_bulanan_saya': rekap_bulanan_saya,
+        'total_hadir_bulan_ini': total_hadir_bulan_ini,
+        'total_jadwal_bulan_ini': total_jadwal_bulan_ini,
+        'persentase_kehadiran': persentase_kehadiran,
+        'kontrak_saya' : kontrak_saya,
+        'sisa_kontrak': sisa_kontrak
     }
-
+ 
+    # DASHBOARD ADMIN
+    if is_admin_or_hrd:
+        total_karyawan = Users.objects.count()
+        total_jadwal = MappingSchedules.objects.filter(date=today).count()
+ 
+        hadir_hari_ini = InAbsences.objects.filter(
+            date_in__range=(start, end),
+            status_in__in=["Tepat Waktu", "Terlambat"]
+        ).count()
+ 
+        tepat_waktu_hari_ini = InAbsences.objects.filter(
+            date_in__range=(start, end), status_in="Tepat Waktu"
+        ).count()
+ 
+        terlamabt_hari_ini = InAbsences.objects.filter(
+            date_in__range=(start, end), status_in="Terlambat"
+        ).count()
+ 
+        cuti_hari_ini = InAbsences.objects.filter(
+            date_in__range=(start, end), status_in="Cuti"
+        ).count()
+ 
+        libur_hari_ini = InAbsences.objects.filter(
+            date_in__range=(start, end), status_in="Libur"
+        ).count()
+ 
+        izin_hari_ini = InAbsences.objects.filter(
+            date_in__range=(start, end), status_in="Izin"
+        ).count()
+ 
+        belum_hadir = total_jadwal - hadir_hari_ini - libur_hari_ini
+ 
+        absence_qs = (
+            InAbsences.objects
+            .filter(
+                nik=OuterRef("nik"),
+                schedule=OuterRef("schedule"),
+                date_in__range=(start, end)
+            )
+            .order_by("date_in")
+        )
+        status_subquery = absence_qs.values("status_in")[:1]
+        jam_masuk_subquery = absence_qs.values("date_in")[:1]
+ 
+        presensi_hari_ini = (
+            MappingSchedules.objects
+            .select_related("nik", "schedule")
+            .annotate(
+                status_masuk=Subquery(status_subquery),
+                jam_masuk=Subquery(jam_masuk_subquery, output_field=DateTimeField())
+            )
+            .filter(date=today)
+        )
+ 
+        if filter_status:
+            if filter_status == "Belum Hadir":
+                presensi_hari_ini = presensi_hari_ini.filter(status_masuk__isnull=True)
+            elif filter_status == "Hadir":
+                presensi_hari_ini = presensi_hari_ini.filter(status_masuk__isnull=False)
+            elif filter_status == "Semua":
+                presensi_hari_ini = presensi_hari_ini.all()
+            else:
+                presensi_hari_ini = presensi_hari_ini.filter(status_masuk=filter_status)
+ 
+        presensi_hari_ini = presensi_hari_ini.order_by("nik__name")
+ 
+        context.update({
+            "total_jadwal": total_jadwal,
+            "tepat_waktu_hari_ini": tepat_waktu_hari_ini,
+            "terlamabt_hari_ini": terlamabt_hari_ini,
+            "cuti_hari_ini": cuti_hari_ini,
+            "libur_hari_ini": libur_hari_ini,
+            "izin_hari_ini": izin_hari_ini,
+            "total_karyawan": total_karyawan,
+            "hadir_hari_ini": hadir_hari_ini,
+            "belum_hadir": belum_hadir,
+            "presensi_hari_ini": presensi_hari_ini,
+        })
+ 
     return render(request, "admin/dashboard.html", context)
 
 @login_auth

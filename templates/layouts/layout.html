@@ -118,7 +118,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <ul class="nav nav-pills nav-sidebar flex-column"
                 data-widget="treeview" role="menu" data-accordion="true">
 
-                {% if user.is_admin == 2 %}
                 <!-- DASHBOARD -->
                 <li class="nav-item">
                     <a href="{% url 'dashboard' %}"
@@ -127,7 +126,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         <p>Dashboard</p>
                     </a>
                 </li>
-                {% endif %}
 
 
                 {% if user.is_admin != 0 %}

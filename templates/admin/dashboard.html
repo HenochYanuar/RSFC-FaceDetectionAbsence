@@ -1,30 +1,82 @@
 {% extends 'layouts/layout.html' %}
 {% block content %}
 
+{% comment %}
+============================================================================
+PERUBAHAN DARI VERSI LAMA:
+- Dashboard sekarang punya 2 "tab": "Dashboard Saya" (info pribadi, tampil
+untuk SEMUA user) dan "Dashboard Admin" (rekap seluruh karyawan, HANYA
+tampil kalau context "is_admin_or_hrd" True).
+- Kalau user BUKAN admin/HRD: tab-nav tidak dirender sama sekali, jadi yang
+terlihat cuma dashboard pribadinya -- tanpa ada UI tab yang membingungkan.
+- Kalau user admin/HRD: muncul dua tombol pill di atas untuk pindah antara
+dashboard pribadinya sendiri dan dashboard rekap perusahaan.
+- Switching tab pakai vanilla JS (fungsi switchDashboardTab di bagian bawah),
+BUKAN data-bs-toggle/API JS Bootstrap -- supaya tetap jalan berapa pun
+versi Bootstrap yang dipakai layout Anda (ini kemungkinan besar penyebab
+tombolnya tidak berfungsi di versi sebelumnya: AdminLTE umumnya jalan di
+atas Bootstrap 4, yang pakai atribut data-toggle, bukan data-bs-toggle).
+============================================================================
+{% endcomment %}
+
 <style>
-.equal-card {
-    height: 500px;              /* tinggi card disamakan */
-    display: flex;
-    flex-direction: column;
-}
+    .equal-card {
+        height: 500px;
+        display: flex;
+        flex-direction: column;
+    }
 
-.table-scroll {
-    flex: 1;                    /* isi penuh space tersisa */
-    overflow-y: auto;           /* scroll jika konten melebihi */
-}
+    .table-scroll {
+        flex: 1;
+        overflow-y: auto;
+    }
 
-.table-scroll thead th {
-    position: sticky;
-    top: 0;
-    background: #f4f6f9; /* warna default AdminLTE */
-    box-shadow: 0 2px 2px rgba(0,0,0,.05);
-}
+    .table-scroll thead th {
+        position: sticky;
+        top: 0;
+        background: #f4f6f9;
+        box-shadow: 0 2px 2px rgba(0, 0, 0, .05);
+    }
 
-a .card:hover {
-    transform: scale(1.03);
-    transition: 0.2s;
-    cursor: pointer;
-}
+    a .card:hover {
+        transform: scale(1.03);
+        transition: 0.2s;
+        cursor: pointer;
+    }
+
+    /* --- Tambahan untuk komposisi dashboard pribadi + admin --- */
+    .dashboard-tabs .nav-link {
+        border-radius: 30px;
+        padding: .5rem 1.25rem;
+        font-weight: 500;
+        color: #495057;
+        background: #eef1f5;
+        margin-right: .5rem;
+    }
+
+    .dashboard-tabs .nav-link.active {
+        background: #0d6efd;
+        color: #fff;
+    }
+
+    .profile-avatar {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+    }
+
+    .status-badge-lg {
+        font-size: .95rem;
+        padding: .5rem 1rem;
+    }
+
+    .attendance-ring h2 {
+        font-weight: 700;
+    }
+
+    .mini-stat .card-body {
+        padding: 1rem 1.25rem;
+    }
 </style>
 
 <!-- Chart.js -->
@@ -37,245 +89,451 @@ a .card:hover {
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4 rounded">
         <div class="container-fluid">
             <span class="navbar-brand">Dashboard</span>
-            <div class="d-flex">
-                <span class="me-3">Admin</span>
+            <div class="d-flex align-items-center">
+                <span class="me-3">{{ user.name|default:"Admin" }}</span>
                 <img src="https://via.placeholder.com/40" class="rounded-circle" alt="">
             </div>
         </div>
     </nav>
 
-    <!-- STAT CARDS -->
-    <div class="row mb-4">
+    {% if is_admin_or_hrd %}
+    <ul class="nav dashboard-tabs mb-4" id="dashboardTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-pribadi-btn" type="button" role="tab"
+                onclick="switchDashboardTab('pribadi'); return false;">
+                Dashboard Saya
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-admin-btn" type="button" role="tab"
+                onclick="switchDashboardTab('admin'); return false;">
+                Dashboard Admin
+            </button>
+        </li>
+    </ul>
+    {% endif %}
 
-    <div class="col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h6 class="text-muted">Total Karyawan</h6>
-                <h3>{{ total_karyawan }}</h3>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h6 class="text-muted">Total Jadwal Hari ini</h6>
-                <h3>{{ total_jadwal }}</h3>
-            </div>
-        </div>
-    </div>
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="tab-pribadi" role="tabpanel">
 
-    <div class="col-md-3">
-        <a href="?status=Hadir" class="text-decoration-none">
-            <div class="card shadow-sm border-0 bg-primary">
-                <div class="card-body ">
-                    <h6 class="text-white">Hadir </h6>
-                    <h3 class="text-white">{{ hadir_hari_ini }}</h3>
+            <div class="row mb-4">
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <img src="{{ user.photo.url }}" class="rounded-circle profile-avatar me-3 mr-2" alt="">
+                            <div>
+                                <h5 class="mb-0">{{ user.name }}</h5>
+                                <small class="text-muted">NIK: {{ user.nik }}</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </a>
-    </div>
 
-    <div class="col-md-3">
-        <a href="?status=Belum Hadir" class="text-decoration-none">
-            <div class="card shadow-sm border-0 bg-dark">
-                <div class="card-body">
-                    <h6 class="text-white">Belum Hadir</h6>
-                    <h3 class="text-white">{{ belum_hadir }}</h3>
-                </div>
-            </div>
-        </a> 
-    </div>
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body row d-flex align-items-center">
+                            <div class=" justify-content-between col-md-6">
+                                <h6 class="text-muted">Jadwal Hari Ini</h6>
+                                {% if jadwal_saya_hari_ini %}
+                                <p class="mb-1"><strong>Jam Masuk (Jadwal):</strong>
+                                    {{ jadwal_saya_hari_ini.schedule.start_time|date:"H:i"|default:"-" }}</p>
+                                <p class="mb-0"><strong>Jam Datang (Absen):</strong>
+                                    {{ jam_datang_saya|date:"H:i"|default:"-" }}</p>
+                                {% endif %}
 
-    <div class="col-md-3">
-        <a href="?status=Tepat Waktu" class="text-decoration-none">
-            <div class="card shadow-sm border-0 bg-success">
-                <div class="card-body">
-                    <h6 class="text-white">Tepat Waktu</h6>
-                    <h3 class="text-white">{{ tepat_waktu_hari_ini }}</h3>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="col-md-3">
-        <a href="?status=Terlambat" class="text-decoration-none">
-            <div class="card shadow-sm border-0 bg-danger">
-                <div class="card-body">
-                    <h6 class="text-white">Terlambat</h6>
-                    <h3 class="text-white">{{ terlamabt_hari_ini }}</h3>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="col-md-4">
-        <a href="?status=cuti" class="text-decoration-none">
-            <div class="card shadow-sm border-0 bg-warning">
-                <div class="card-body">
-                    <h6 class="text-white">Cuti</h6>
-                    <h3 class="text-white">{{ cuti_hari_ini }}</h3>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="col-md-4">
-        <a href="?status=Libur" class="text-decoration-none">
-            <div class="card shadow-sm border-0 bg-secondary">
-                <div class="card-body">
-                    <h6 class="text-white">Libur</h6>
-                    <h3 class="text-white">{{ libur_hari_ini }}</h3>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="col-md-4">
-        <a href="?status=Izin" class="text-decoration-none">
-            <div class="card shadow-sm border-0 bg-info">
-                <div class="card-body">
-                    <h6 class="text-white">Izin</h6>
-                    <h3 class="text-white">{{ izin_hari_ini }}</h3>
-                </div>
-            </div>
-        </a>
-    </div>
-
-</div>
-
-<!-- GRAFIK -->
-<div class="row">
-    <!-- BAR -->
-    {% comment %} <div class="col-md-8 mb-4">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <h5>Grafik Kehadiran 7 Hari Terakhir</h5>
-                <canvas id="attendanceChart" height="140"></canvas>
-            </div>
-        </div>
-    </div> {% endcomment %}
-
-    <!-- PIE -->
-    <div class="col-md-4 mb-4">
-        <div class="card shadow-sm border-0 equal-card">
-            <div class="card-body">
-                <h5>Statistik Hari Ini</h5>
-                <canvas id="todayChart" height="240"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-8 mb-4">
-        <div class="card shadow-sm border-0 equal-card">
-            <div class="card-body d-flex flex-column">
-                <h5 class="mb-3">Presensi Hari Ini</h5>
-
-                <div class="table-responsive table-scroll">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>NIK</th>
-                                <th>Nama</th>
-                                <th>Jam Masuk (Jadwal)</th>
-                                <th>Jam Datang (Absen)</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in presensi_hari_ini %}
-                            <tr>
-                                <td>{{ row.nik.nik }}</td>
-                                <td>{{ row.nik.name }}</td>
-
-                                <td class="text-center">
-                                    {% if row.status_masuk in "Cuti Libur Izin" %}
-                                        -
-                                    {% else %}
-                                        {{ row.schedule.start_time|date:"H:i"|default:"-" }}
-                                    {% endif %}
-                                </td>
-
-                                <td class="text-center">
-                                    {% if row.status_masuk in "Cuti Libur Izin" %}
-                                        -
-                                    {% else %}
-                                        {{ row.jam_masuk|date:"H:i"|default:"-" }}
-                                    {% endif %}
-                                </td>
-
-                                <td>
-                                    <span class="
-                                        {% if row.status_masuk == 'Tepat Waktu' %}badge bg-success
-                                        {% elif row.status_masuk == 'Terlambat' %}badge bg-danger
-                                        {% elif row.status_masuk == 'Cuti' %}badge bg-warning
-                                        {% elif row.status_masuk == 'Libur' %}badge bg-secondary
-                                        {% elif row.status_masuk == 'Izin' %}badge bg-info
-                                        {% else %}badge bg-dark{% endif %}
-                                    ">
-                                    {% if row.status_masuk %}
-                                        {{ row.status_masuk }}
-                                    {% else %}
-                                        Belum Hadir
-                                    {% endif %}
+                                <div class="mt-2">
+                                    <span class="badge bg-opacity-10 rounded-pill px-3 py-2
+                                        {% if status_saya_hari_ini == 'Tepat Waktu' %}bg-success
+                                        {% elif status_saya_hari_ini == 'Terlambat' %}bg-danger
+                                        {% elif status_saya_hari_ini == 'Cuti' %}bg-warning
+                                        {% elif status_saya_hari_ini == 'Libur' %}bg-secondary
+                                        {% elif status_saya_hari_ini == 'Izin' %}bg-info
+                                        {% comment %} {% elif status_saya_hari_ini == 'Tidak Ada Jadwal' %}bg-light text-dark border {% endcomment %}
+                                        {% else %}bg-dark mb-0 badge bg-opacity-10 rounded-pill px-3 py-2
+                                        {% endif %}">
+                                        {{ status_saya_hari_ini }}
                                     </span>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center">Tidak ada data.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+                            <div class=" justify-content-between col-md-6">
+                                <h6 class="text-muted">Jadwal Besok</h6>
+                                {% if jadwal_saya_besok %}
+                                <p class="mb-1"><strong>Tanggal:</strong>
+                                    {{ jadwal_saya_besok.date|date:"d M Y"|default:"-" }}</p>
+                                <p class="mb-0"><strong>Jam Masuk (Jadwal):</strong> <br>
+                                    <span class="mt-2 badge bg-opacity-10 rounded-pill px-3 py-2
+                                        {% if jadwal_saya_besok.schedule.name == 'Libur' %}bg-secondary
+                                        {% elif jadwal_saya_besok.schedule.name == 'Cuti' %}bg-warning
+                                        {% elif jadwal_saya_besok.schedule.name == 'Izin' %}bg-info
+                                        {% else %}bg-success{% endif %}">
+                                        {{ jadwal_saya_besok.schedule.name }}
+                                    </span>
+                                </p>
+                                {% else %}
+                                <p class="bg-dark mb-0 badge bg-opacity-10 rounded-pill px-3 py-2">Tidak ada jadwal besok</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% comment %} <div class="col-md-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body text-center attendance-ring">
+                            <h6 class="text-muted mb-1">Kehadiran Bulan Ini</h6>
+                            <h2 class="mb-0">{{ persentase_kehadiran }}%</h2>
+                            <small class="text-muted">{{ total_hadir_bulan_ini }} dari {{ total_jadwal_bulan_ini }}
+                                jadwal</small>
+                        </div>
+                    </div>
+                </div> {% endcomment %}
+
+                <div class="col-md-3">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-body text-center attendance-ring">
+                            <h6 class="text-muted mb-1">Masa kontrak</h6>
+                            {% if kontrak_saya %}
+                            <h3 class="mt-2 mb-2"><small>Berakhir: {{ kontrak_saya.end_date|date:"d M Y" }}</small></h3>
+                            {% else %}
+                            <h3 class="mt-2 mb-2 badge bg-dark rounded-pill px-3 py-2">Tidak ada kontrak aktif</h3>
+                            {% endif %}
+
+                            {% if kontrak_saya %}
+                            {% if sisa_kontrak > 30 %}
+                            <span
+                                class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2">
+                                Sisa kontrak: {{ sisa_kontrak }} Hari
+                            </span>
+                            {% elif sisa_kontrak > 14 %}
+                            <span
+                                class="badge bg-warning bg-opacity-10 text-warning border border-warning rounded-pill px-3 py-2">
+                                Sisa kontrak: {{ sisa_kontrak }} Hari
+                            </span>
+                            {% elif sisa_kontrak > 0 %}
+                            <span
+                                class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-3 py-2">
+                                Sisa kontrak: {{ sisa_kontrak }} Hari
+                            </span>
+                            {% else %}
+                            <span class="badge bg-dark rounded-pill px-3 py-2">Kontrak telah berakhir.</span>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-6 col-md-3 mb-3 mb-md-0">
+                    <div class="card shadow-sm border-0 bg-success text-white mini-stat">
+                        <div class="card-body">
+                            <h6 class="mb-1">Tepat Waktu</h6>
+                            <h3 class="mb-0">{{ rekap_bulanan_saya.tepat_waktu }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 mb-3 mb-md-0">
+                    <div class="card shadow-sm border-0 bg-danger text-white mini-stat">
+                        <div class="card-body">
+                            <h6 class="mb-1">Terlambat</h6>
+                            <h3 class="mb-0">{{ rekap_bulanan_saya.terlambat }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm border-0 bg-info text-white mini-stat">
+                        <div class="card-body">
+                            <h6 class="mb-1">Izin</h6>
+                            <h3 class="mb-0">{{ rekap_bulanan_saya.izin }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card shadow-sm border-0 bg-warning text-white mini-stat">
+                        <div class="card-body">
+                            <h6 class="mb-1">Cuti</h6>
+                            <h3 class="mb-0">{{ rekap_bulanan_saya.cuti }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-5 mb-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <h5>Komposisi Kehadiran Bulan Ini</h5>
+                            <canvas id="myMonthChart" height="220"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ===================== END TAB PRIBADI ===================== -->
+
+
+        {% if is_admin_or_hrd %}
+        <!-- =====================================================
+             TAB 2: DASHBOARD ADMIN -- HANYA UNTUK ADMIN/HRD
+             ===================================================== -->
+        <div class="tab-pane fade" id="tab-admin" role="tabpanel">
+
+            <!-- STAT CARDS -->
+            <div class="row mb-4">
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <h6 class="text-muted">Total Karyawan</h6>
+                            <h3>{{ total_karyawan }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <h6 class="text-muted">Total Jadwal Hari ini</h6>
+                            <h3>{{ total_jadwal }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <a href="?status=Hadir#tab-admin" class="text-decoration-none">
+                        <div class="card shadow-sm border-0 bg-primary">
+                            <div class="card-body">
+                                <h6 class="text-white">Hadir</h6>
+                                <h3 class="text-white">{{ hadir_hari_ini }}</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-3">
+                    <a href="?status=Belum Hadir#tab-admin" class="text-decoration-none">
+                        <div class="card shadow-sm border-0 bg-dark">
+                            <div class="card-body">
+                                <h6 class="text-white">Belum Hadir</h6>
+                                <h3 class="text-white">{{ belum_hadir }}</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-3">
+                    <a href="?status=Tepat Waktu#tab-admin" class="text-decoration-none">
+                        <div class="card shadow-sm border-0 bg-success">
+                            <div class="card-body">
+                                <h6 class="text-white">Tepat Waktu</h6>
+                                <h3 class="text-white">{{ tepat_waktu_hari_ini }}</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-3">
+                    <a href="?status=Terlambat#tab-admin" class="text-decoration-none">
+                        <div class="card shadow-sm border-0 bg-danger">
+                            <div class="card-body">
+                                <h6 class="text-white">Terlambat</h6>
+                                <h3 class="text-white">{{ terlamabt_hari_ini }}</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="?status=cuti#tab-admin" class="text-decoration-none">
+                        <div class="card shadow-sm border-0 bg-warning">
+                            <div class="card-body">
+                                <h6 class="text-white">Cuti</h6>
+                                <h3 class="text-white">{{ cuti_hari_ini }}</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="?status=Libur#tab-admin" class="text-decoration-none">
+                        <div class="card shadow-sm border-0 bg-secondary">
+                            <div class="card-body">
+                                <h6 class="text-white">Libur</h6>
+                                <h3 class="text-white">{{ libur_hari_ini }}</h3>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="?status=Izin#tab-admin" class="text-decoration-none">
+                        <div class="card shadow-sm border-0 bg-info">
+                            <div class="card-body">
+                                <h6 class="text-white">Izin</h6>
+                                <h3 class="text-white">{{ izin_hari_ini }}</h3>
+                            </div>
+                        </div>
+                    </a>
                 </div>
 
             </div>
+
+            <!-- GRAFIK + TABEL -->
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm border-0 equal-card">
+                        <div class="card-body">
+                            <h5>Statistik Hari Ini</h5>
+                            <canvas id="todayChart" height="240"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-8 mb-4">
+                    <div class="card shadow-sm border-0 equal-card">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="mb-3">Presensi Hari Ini</h5>
+
+                            <div class="table-responsive table-scroll">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>NIK</th>
+                                            <th>Nama</th>
+                                            <th>Jam Masuk (Jadwal)</th>
+                                            <th>Jam Datang (Absen)</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in presensi_hari_ini %}
+                                        <tr>
+                                            <td>{{ row.nik.nik }}</td>
+                                            <td>{{ row.nik.name }}</td>
+
+                                            <td class="text-center">
+                                                {% if row.status_masuk in "Cuti Libur Izin" %}
+                                                -
+                                                {% else %}
+                                                {{ row.schedule.start_time|date:"H:i"|default:"-" }}
+                                                {% endif %}
+                                            </td>
+
+                                            <td class="text-center">
+                                                {% if row.status_masuk in "Cuti Libur Izin" %}
+                                                -
+                                                {% else %}
+                                                {{ row.jam_masuk|date:"H:i"|default:"-" }}
+                                                {% endif %}
+                                            </td>
+
+                                            <td>
+                                                <span class="
+                                                    {% if row.status_masuk == 'Tepat Waktu' %}badge bg-success
+                                                    {% elif row.status_masuk == 'Terlambat' %}badge bg-danger
+                                                    {% elif row.status_masuk == 'Cuti' %}badge bg-warning
+                                                    {% elif row.status_masuk == 'Libur' %}badge bg-secondary
+                                                    {% elif row.status_masuk == 'Izin' %}badge bg-info
+                                                    {% else %}badge bg-dark{% endif %}
+                                                ">
+                                                    {% if row.status_masuk %}
+                                                    {{ row.status_masuk }}
+                                                    {% else %}
+                                                    Belum Hadir
+                                                    {% endif %}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">Tidak ada data.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+        <!-- ===================== END TAB ADMIN ===================== -->
+        {% endif %}
+
     </div>
 </div>
 
-<!-- TABLE -->
-
-
-</div>
-<!-- Bootstrap JS -->
 <script>
-    // Data bar chart (ambil dari Django)
-    {% comment %} const attendanceLabels = {{ labels_7_hari|safe }};
-    const attendanceData = {{ data_7_hari|safe }};
+    // Ditulis manual (tidak pakai API JS Bootstrap) supaya tetap jalan apa pun
+    // versi Bootstrap yang dipakai layout Anda (v3/4/5), termasuk kalau JS
+    // bundle Bootstrap belum/tidak dimuat sama sekali.
+    function switchDashboardTab(tabName) {
+        var panePribadi = document.getElementById('tab-pribadi');
+        var paneAdmin = document.getElementById('tab-admin');
+        var btnPribadi = document.getElementById('tab-pribadi-btn');
+        var btnAdmin = document.getElementById('tab-admin-btn');
 
-    new Chart(document.getElementById('attendanceChart'), {
-        type: 'bar',
+        if (tabName === 'admin') {
+            if (panePribadi) { panePribadi.classList.remove('show', 'active'); }
+            if (paneAdmin) { paneAdmin.classList.add('show', 'active'); }
+            if (btnPribadi) { btnPribadi.classList.remove('active'); }
+            if (btnAdmin) { btnAdmin.classList.add('active'); }
+        } else {
+            if (paneAdmin) { paneAdmin.classList.remove('show', 'active'); }
+            if (panePribadi) { panePribadi.classList.add('show', 'active'); }
+            if (btnAdmin) { btnAdmin.classList.remove('active'); }
+            if (btnPribadi) { btnPribadi.classList.add('active'); }
+        }
+    }
+
+    // Kalau URL mengandung ?status=... (dari klik kartu admin), otomatis
+    // buka tab admin supaya hasil filter langsung kelihatan.
+    {% if is_admin_or_hrd and filter_status %}
+    document.addEventListener('DOMContentLoaded', function () {
+        switchDashboardTab('admin');
+    });
+    {% endif %}
+
+    // Donut chart: komposisi kehadiran bulan ini (pribadi)
+    new Chart(document.getElementById('myMonthChart'), {
+        type: 'doughnut',
         data: {
-            labels: attendanceLabels,
+            labels: ['Tepat Waktu', 'Terlambat', 'Izin', 'Cuti', 'Libur'],
             datasets: [{
-                label: 'Hadir',
-                data: attendanceData,
-                backgroundColor: '#0d6efd'
+                data: [
+                    {{ rekap_bulanan_saya.tepat_waktu }},
+            {{ rekap_bulanan_saya.terlambat }},
+                    {{ rekap_bulanan_saya.izin }},
+        {{ rekap_bulanan_saya.cuti }},
+        {{ rekap_bulanan_saya.libur }}
+                ],
+        backgroundColor: ['#28A745', '#DC3545', '#17A2B8', '#FFC107', '#6C757D']
             }]
         },
-        options: { responsive: true } 
-    });{% endcomment %}
+        options: { responsive: true }
+    });
 
-    // Data pie chart (hari ini)
+    {% if is_admin_or_hrd %}
+    // Pie chart: statistik perusahaan hari ini (admin)
     new Chart(document.getElementById('todayChart'), {
         type: 'pie',
         data: {
             labels: ['Tepat Waktu', 'Terlambat', 'Cuti', 'Izin', 'Libur', 'Belum Hadir'],
             datasets: [{
                 data: [
-                    {{ tepat_waktu_hari_ini }}, 
-                    {{ terlamabt_hari_ini }}, 
-                    {{ cuti_hari_ini }}, 
-                    {{ izin_hari_ini }}, 
-                    {{ libur_hari_ini }}, 
-                    {{ belum_hadir }}
-                    ],
-                backgroundColor: ['#28A745', '#DC3545', '#FFC107', '#17A2B8', '#6C757D', '#343A40']
+                    {{ tepat_waktu_hari_ini }},
+            {{ terlamabt_hari_ini }},
+                    {{ cuti_hari_ini }},
+        {{ izin_hari_ini }},
+        {{ libur_hari_ini }},
+        {{ belum_hadir }}
+                ],
+        backgroundColor: ['#28A745', '#DC3545', '#FFC107', '#17A2B8', '#6C757D', '#343A40']
             }]
         },
         options: { responsive: true }
     });
+    {% endif %}
 </script>
-{% endblock%}
+{% endblock %}
