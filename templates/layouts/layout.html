@@ -407,22 +407,29 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <!-- /.control-sidebar -->
 
     <!-- Main Footer -->
-    <footer class="main-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: 10px 20px; font-size: 0.9rem;">
-      <!-- Kiri: Hak Cipta Utama -->
-      <strong style="display: flex; align-items: center; gap: 5px;">
-        Copyright &copy; 2025-2026 
-        <img src="{% static '/assets/images/rsfc_logo.png' %}" alt="Logo" class="brand-image img-circle" style="background-color: white; width: 15px; opacity: 0.8; margin: 0;"> 
-        <span class="text-info">ASI DEWA RSFC</span>
-      </strong>
-      
-      <!-- Kanan: Kredit Pengembang & Tema -->
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <b>Powered By <span style="color:#ff0000;">HEHE GROUP</span></b>
-        <!-- Keterangan AdminLTE disamarkan dengan warna pudar agar tidak mendominasi -->
-        <span style="color: #6c757d; font-size: 0.82em;" >
-          Theme by <a href="https://adminlte.io" target="_blank" style="color: inherit; text-decoration: none;">AdminLTE</a>
-        </span>
-      </div>
+    <footer class="main-footer d-flex flex-column flex-md-row justify-content-center justify-content-md-between align-items-center text-center py-3" style="font-size: 0.9rem;">
+        <!-- Kiri: Hak Cipta Utama -->
+        <strong class="d-flex align-items-center justify-content-center mb-2 mb-md-0">
+            Copyright &copy; 2026 
+            <img src="{% static '/assets/images/rsfc_logo.png' %}" alt="Logo" class="brand-image img-circle mx-2" style="background-color: white; width: 15px; opacity: 0.8;"> 
+            <span class="text-info">ASI DEWA RSFC</span>
+        </strong>
+          
+        <!-- Kanan: Kredit Pengembang & Tema -->
+        <div class="d-flex align-items-center justify-content-center">
+            <b>Powered By 
+              <span class="text-danger">
+                <span><a href="https://www.linkedin.com/in/lexca-helga-febrianto-84662a1bb/" class="text-danger" target="_blank">HE</a></span><span><a href="https://henochyanuar.vercel.app/" class="text-danger" target="_blank">HE</a></span> 
+                  GROUP
+              </span>
+            </b>
+            
+            <!-- Keterangan AdminLTE -->
+            <span class="text-muted ml-3" style="font-size: 0.82em;">
+                Theme by <a href="https://adminlte.io" target="_blank" class="text-muted" style="text-decoration: none;">AdminLTE</a>
+            </span>
+        </div>
+        
     </footer>
   </div>
   <!-- ./wrapper -->
