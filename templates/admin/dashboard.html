@@ -1,24 +1,6 @@
 {% extends 'layouts/layout.html' %}
 {% block content %}
 
-{% comment %}
-============================================================================
-PERUBAHAN DARI VERSI LAMA:
-- Dashboard sekarang punya 2 "tab": "Dashboard Saya" (info pribadi, tampil
-untuk SEMUA user) dan "Dashboard Admin" (rekap seluruh karyawan, HANYA
-tampil kalau context "is_admin_or_hrd" True).
-- Kalau user BUKAN admin/HRD: tab-nav tidak dirender sama sekali, jadi yang
-terlihat cuma dashboard pribadinya -- tanpa ada UI tab yang membingungkan.
-- Kalau user admin/HRD: muncul dua tombol pill di atas untuk pindah antara
-dashboard pribadinya sendiri dan dashboard rekap perusahaan.
-- Switching tab pakai vanilla JS (fungsi switchDashboardTab di bagian bawah),
-BUKAN data-bs-toggle/API JS Bootstrap -- supaya tetap jalan berapa pun
-versi Bootstrap yang dipakai layout Anda (ini kemungkinan besar penyebab
-tombolnya tidak berfungsi di versi sebelumnya: AdminLTE umumnya jalan di
-atas Bootstrap 4, yang pakai atribut data-toggle, bukan data-bs-toggle).
-============================================================================
-{% endcomment %}
-
 <style>
     .equal-card {
         height: 500px;
@@ -97,15 +79,15 @@ atas Bootstrap 4, yang pakai atribut data-toggle, bukan data-bs-toggle).
     </nav>
 
     {% if is_admin_or_hrd %}
-    <ul class="nav dashboard-tabs mb-4" id="dashboardTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="tab-pribadi-btn" type="button" role="tab"
+    <ul class="nav dashboard-tabs mb-4 flex-column flex-sm-row" id="dashboardTab" role="tablist">
+        <li class="nav-item mb-2 mb-sm-0" role="presentation">
+            <button class="nav-link active w-100 text-sm-start text-center" id="tab-pribadi-btn" type="button" role="tab"
                 onclick="switchDashboardTab('pribadi'); return false;">
                 Dashboard Saya
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-admin-btn" type="button" role="tab"
+            <button class="nav-link w-100 text-sm-start text-center" id="tab-admin-btn" type="button" role="tab"
                 onclick="switchDashboardTab('admin'); return false;">
                 Dashboard Admin
             </button>
@@ -465,9 +447,6 @@ atas Bootstrap 4, yang pakai atribut data-toggle, bukan data-bs-toggle).
 </div>
 
 <script>
-    // Ditulis manual (tidak pakai API JS Bootstrap) supaya tetap jalan apa pun
-    // versi Bootstrap yang dipakai layout Anda (v3/4/5), termasuk kalau JS
-    // bundle Bootstrap belum/tidak dimuat sama sekali.
     function switchDashboardTab(tabName) {
         var panePribadi = document.getElementById('tab-pribadi');
         var paneAdmin = document.getElementById('tab-admin');
